@@ -1236,6 +1236,7 @@ Init_openssl(void)
 #ifndef OPENSSL_NO_TS
     Init_ossl_ts();
 #endif
+    Init_ossl_dtls();  /* must be after _ssl */
     Init_ossl_x509();
     Init_ossl_ocsp();
     Init_ossl_engine();
