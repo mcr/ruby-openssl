@@ -46,31 +46,74 @@ static void cookie_secret_setup(void)
   }
 }
 
+#define DTLS_COOKIE_DEBUG 1
+
+#ifdef DTLS_COOKIE_DEBUG
+static void print_cookie(const char *label, const unsigned char cookie[], const unsigned int cookie_len)
+{
+  unsigned int i;
+  printf("%s cookie: ", label);
+  for(i=0; i<cookie_len; i++) {
+    printf("%02x ", cookie[i]);
+  }
+  printf("\n");
+}
+#define PRINT_COOKIE(label, cookie, len) print_cookie(label, cookie,len)
+#else
+#define PRINT_COOKIE(label, cookie, len) {} while(0)
+#endif
+
 static void cookie_calculate(unsigned char cookie[],
                              unsigned int  *cookie_len,
-                             const unsigned short peerport,
-                             const unsigned char *addrdata,
-                             const unsigned int   addrlen,
+                             BIO_ADDR *peer,
                              const time_t         curtime)
 {
     unsigned char things_to_crunch[256];
     int           things_len = 0;
+    const struct sockaddr *peersock = BIO_ADDR_sockaddr(peer);
+    const unsigned char *addrdata;
+    unsigned int   addrlen;
+    unsigned short peerport;
 
-    /* 24 bits of time is enough */
+    switch(peersock->sa_family) {
+    case AF_INET:
+      addrdata = (unsigned char *)&((struct sockaddr_in *)peersock)->sin_addr;
+      addrlen  = 4;
+      break;
+
+    case AF_INET6:
+      addrdata = ((struct sockaddr_in6 *)peersock)->sin6_addr.s6_addr;
+      addrlen  = 16;
+      break;
+
+    default:
+      addrdata = (unsigned char *)"";
+      addrlen  = 0;
+    }
+
+    peerport = BIO_ADDR_rawport(peer);
+
+   /* 24 bits of time is enough */
+    PRINT_COOKIE("time",  (unsigned char *)&curtime, 4);
     things_to_crunch[0] = (curtime >> 24) & 0xff;
     things_to_crunch[1] = (curtime >> 16) & 0xff;
     things_to_crunch[2] = (curtime >>  8) & 0xff;
     things_to_crunch[3] = 0;
+    PRINT_COOKIE("port",  (unsigned char *)&peerport, 2);
     things_to_crunch[4] = (peerport >> 8) & 0xff;
     things_to_crunch[5] = (peerport >> 0) & 0xff;
     things_len = 6;
+    PRINT_COOKIE("addr", addrdata, addrlen);
     memcpy(things_to_crunch + things_len, addrdata, addrlen);
     things_len += addrlen;
 
+    PRINT_COOKIE("scrt", cookie_secret, sizeof(cookie_secret));
     HMAC(EVP_sha256(),
          cookie_secret, sizeof(cookie_secret),
          things_to_crunch, things_len,
          cookie, cookie_len);
+
+    PRINT_COOKIE("calculated  ", cookie, *cookie_len);
 }
 
 static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
@@ -94,16 +137,16 @@ static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
     }
 
     cookie1_len = sizeof(cookie1);
-    cookie_calculate(cookie1, &cookie1_len,   BIO_ADDR_rawport(peer),
-                     (const unsigned char *)BIO_ADDR_sockaddr(peer),
-                     BIO_ADDR_sockaddr_size(peer),
+    cookie_calculate(cookie1, &cookie1_len, peer,
                      tv.tv_sec);
 
-    for (i = 0; i < *cookie_len && i<cookie1_len; i++, cookie++) {
-      *cookie = cookie1[i];
+    for (i = 0; i<DTLS1_COOKIE_LENGTH && i<cookie1_len; i++) {
+      cookie[i] = cookie1[i];
     }
     *cookie_len = i;
     ret = 1;
+
+    PRINT_COOKIE("generated  ", cookie, *cookie_len);
 
  err:
     if(peer) BIO_ADDR_free(peer);
@@ -120,6 +163,8 @@ static int cookie_verify(SSL *ssl, const unsigned char *peer_cookie,
     BIO *rbio;
     int  ret;
 
+    PRINT_COOKIE("peer cookie", peer_cookie, peer_cookie_len);
+
     cookie_secret_setup();
     gettimeofday(&tv, NULL);
 
@@ -131,10 +176,7 @@ static int cookie_verify(SSL *ssl, const unsigned char *peer_cookie,
     }
 
     cookie1_len = sizeof(cookie1);
-    cookie_calculate(cookie1, &cookie1_len,   BIO_ADDR_rawport(peer),
-                     (const unsigned char *)BIO_ADDR_sockaddr(peer),
-                     BIO_ADDR_sockaddr_size(peer),
-                     tv.tv_sec);
+    cookie_calculate(cookie1, &cookie1_len,  peer, tv.tv_sec);
 
     if(cookie1_len != peer_cookie_len) {
       /* cookies lengths must match! */
@@ -151,9 +193,7 @@ static int cookie_verify(SSL *ssl, const unsigned char *peer_cookie,
       tv.tv_sec -= 256;
 
       cookie1_len = sizeof(cookie1);
-      cookie_calculate(cookie1, &cookie1_len,   BIO_ADDR_rawport(peer),
-                       (const unsigned char *)BIO_ADDR_sockaddr(peer),
-                       BIO_ADDR_sockaddr_size(peer),
+      cookie_calculate(cookie1, &cookie1_len, peer,
                        tv.tv_sec);
 
       if(memcmp(cookie1, peer_cookie, cookie1_len) == 0) {
