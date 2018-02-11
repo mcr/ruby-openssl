@@ -437,65 +437,11 @@ ossl_dtls_accept_nonblock(int argc, VALUE *argv, VALUE self)
 }
 #endif
 
-#if 0
-/*
- * call-seq:
- *    SSLSocket.new(io) => aSSLSocket
- *    SSLSocket.new(io, ctx) => aSSLSocket
- *
- * Creates a new SSL socket from _io_ which must be a real IO object (not an
- * IO-like object that responds to read/write).
- *
- * If _ctx_ is provided the SSL Sockets initial params will be taken from
- * the context.
- *
- * The OpenSSL::Buffering module provides additional IO methods.
- *
- * This method will freeze the SSLContext if one is provided;
- * however, session management is still allowed in the frozen SSLContext.
- */
-static VALUE
-ossl_dtls_initialize(int argc, VALUE *argv, VALUE self)
-{
-    VALUE io, v_ctx, verify_cb;
-    SSL *ssl;
-    SSL_CTX *ctx;
-
-    TypedData_Get_Struct(self, SSL, &ossl_ssl_type, ssl);
-    if (ssl)
-	ossl_raise(eSSLError, "SSL already initialized");
-
-    if (rb_scan_args(argc, argv, "11", &io, &v_ctx) == 1)
-	v_ctx = rb_funcall(cSSLContext, rb_intern("new"), 0);
-
-    GetSSLCTX(v_ctx, ctx);
-    rb_ivar_set(self, id_i_context, v_ctx);
-    ossl_sslctx_setup(v_ctx);
-
-    if (rb_respond_to(io, rb_intern("nonblock=")))
-	rb_funcall(io, rb_intern("nonblock="), 1, Qtrue);
-    rb_ivar_set(self, id_i_io, io);
-
-    ssl = SSL_new(ctx);
-    if (!ssl)
-	ossl_raise(eSSLError, NULL);
-    RTYPEDDATA_DATA(self) = ssl;
-
-    SSL_set_ex_data(ssl, ossl_ssl_ex_ptr_idx, (void *)self);
-    SSL_set_info_callback(ssl, ssl_info_cb);
-    verify_cb = rb_attr_get(v_ctx, id_i_verify_callback);
-    SSL_set_ex_data(ssl, ossl_ssl_ex_vcb_idx, (void *)verify_cb);
-
-    rb_call_super(0, NULL);
-
-    return self;
-}
-
 /*
  * call-seq:
  *    ssl.connect_nonblock([options]) => self
  *
- * Initiates the SSL/TLS handshake as a client in non-blocking manner.
+ * Initiates the DTLS handshake as a client in non-blocking manner.
  *
  *   # emulates blocking connect
  *   begin
@@ -524,8 +470,22 @@ ossl_dtls_connect_nonblock(int argc, VALUE *argv, VALUE self)
     return ossl_start_ssl(self, SSL_connect, "SSL_connect", opts);
 }
 
+/*
+ * call-seq:
+ *    ssl.connect => self
+ *
+ * Initiates an DTLS handshake with a server.  The handshake may be started
+ * after unencrypted data has been sent over the socket.
+ */
+static VALUE
+ossl_dtls_connect(VALUE self)
+{
+    ossl_dtls_setup(self);
 
-#endif /* 0 */
+    return ossl_start_ssl(self, SSL_connect, "SSL_connect", Qfalse);
+}
+
+
 #endif /* !defined(OPENSSL_NO_SOCK) */
 
 #undef rb_intern
@@ -561,5 +521,8 @@ Init_ossl_dtls(void)
     rb_define_method(cDTLSSocket, "accept",          ossl_dtls_accept, -1);
     rb_define_method(cDTLSSocket, "accept_nonblock", ossl_dtls_accept_nonblock, -1);
 #endif
+    rb_define_method(cDTLSSocket, "connect",         ossl_dtls_connect, 0);
+    rb_define_method(cDTLSSocket, "connect_nonblock",ossl_dtls_connect_nonblock, -1);
+
     //printf("\n\nsetting cDTLSSocket.accept to %p\n", ossl_dtls_accept);
 }

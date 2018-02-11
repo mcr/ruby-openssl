@@ -17,7 +17,7 @@ module OpenSSL
   module SSL
     class DTLSContext < SSLContext
       DEFAULT_PARAMS = { # :nodoc:
-        :min_version => OpenSSL::SSL::TLS12_VERSION,
+        :min_version => OpenSSL::SSL::TLS1_2_VERSION,
         :verify_mode => OpenSSL::SSL::VERIFY_PEER,
         :verify_hostname => true,
         :options => -> {
@@ -50,10 +50,11 @@ module OpenSSL
     class DTLSSocket < SSLSocket
       # parent does:
       # attr_reader :hostname
+      attr_accessor :connected
 
-      # The underlying IO object.
-      #attr_reader :io
-      #alias :to_io :io
+      def connected?
+        !!@connected
+      end
 
       # call-seq:
       #   ssl.session -> aSession
@@ -64,6 +65,25 @@ module OpenSSL
         SSL::Session.new(self)
       rescue SSL::Session::SessionError
         nil
+      end
+
+      def sync
+        true
+      end
+
+      # generally used by CoAP mechanisms
+      def send(message, size, dsthost, dstport)
+        if !connected?
+          # connect the socket up.
+          #STDERR.puts "connecting to #{dsthost}:#{dstport}"
+          @io.connect(dsthost, dstport)
+
+          # start the DTLS.
+          STDERR.puts "DTLS to #{dsthost}:#{dstport}"
+          connect
+          @connected = true
+        end
+        write(message, size)
       end
 
       private
