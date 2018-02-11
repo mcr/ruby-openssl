@@ -41,7 +41,12 @@ module OpenSSL::Buffering
     super
     @eof = false
     @rbuffer = ""
-    @sync = @io.sync
+
+    begin
+      @sync = @io.sync
+    rescue NoMethodError
+      # Celluloid::IO::UDPSOcket does not support sync.
+    end
   end
 
   #
