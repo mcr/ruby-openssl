@@ -51,6 +51,8 @@ module OpenSSL
       # parent does:
       # attr_reader :hostname
       attr_accessor :connected
+      attr_accessor :dsthost, :dstport
+      attr_accessor :non_blocking
 
       def connected?
         !!@connected
@@ -72,18 +74,38 @@ module OpenSSL
       end
 
       # generally used by CoAP mechanisms
-      def send(message, size, dsthost, dstport)
+      def sendmsg(message, size, dsthost, dstport)
         if !connected?
           # connect the socket up.
           #STDERR.puts "connecting to #{dsthost}:#{dstport}"
           @io.connect(dsthost, dstport)
 
           # start the DTLS.
-          STDERR.puts "DTLS to #{dsthost}:#{dstport}"
+          #STDERR.puts "DTLS to #{dsthost}:#{dstport}"
           connect
           @connected = true
         end
-        write(message, size)
+        syswrite(message)
+      end
+
+      alias_method :send, :sendmsg
+
+      def recvfrom(size, flags = nil)
+        if @non_blocking
+          #STDERR.puts "starting recvfrom_nonblock sleep"
+          sleep 1
+          data = sysread_nonblock(size)
+          #STDERR.puts "Received: #{data.size} bytes"
+        else
+          #STDERR.puts "starting recvfrom sleep"
+          sleep 1
+          data = sysread(size)
+          #STDERR.puts "Received: #{data.size} bytes"
+        end
+
+        # fake as if it was recvfrom, which returns origin
+        # XXX fix family here.
+        [data, ["AF_INET6", @dstport, nil, @dsthost]]
       end
 
       private
