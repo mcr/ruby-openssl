@@ -1829,6 +1829,9 @@ ossl_ssl_read_internal(int argc, VALUE *argv, VALUE self, int nonblock)
     if (ssl_started(ssl)) {
 	for (;;){
 	    nread = SSL_read(ssl, RSTRING_PTR(str), ilen);
+#if 0
+            fprintf(stderr, "SSL_read for %d bytes, returns %d, avail: %d\n", ilen, nread, SSL_pending(ssl));
+#endif
 	    switch(ssl_get_error(ssl, nread)){
 	    case SSL_ERROR_NONE:
 		goto end;
@@ -1877,6 +1880,9 @@ ossl_ssl_read_internal(int argc, VALUE *argv, VALUE self, int nonblock)
     }
 
   end:
+#if 0
+    fprintf(stderr, "SSL returning %d\n", nread);
+#endif
     rb_str_set_len(str, nread);
     return str;
 }
@@ -1936,6 +1942,9 @@ ossl_ssl_write_internal(VALUE self, VALUE str, VALUE opts)
 		goto end;
 
 	    nwrite = SSL_write(ssl, RSTRING_PTR(str), num);
+#if 0
+            fprintf(stderr, "wrote %d bytes to SSL, sent: %d\n", num, nwrite);
+#endif
 	    switch(ssl_get_error(ssl, nwrite)){
 	    case SSL_ERROR_NONE:
 		goto end;
