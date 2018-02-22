@@ -364,7 +364,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
 
     /* new_sock is now setup, need to allocate new SSL context and insert socket into new bio */
     /* create a new ruby object */
-    dtls_child = TypedData_Wrap_Struct(cSSLSocket, &ossl_ssl_type, NULL);
+    dtls_child = TypedData_Wrap_Struct(cDTLSSocket, &ossl_ssl_type, NULL);
 
     /* connect them up. */
     if (!sslnew)
