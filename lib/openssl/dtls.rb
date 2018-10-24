@@ -91,6 +91,7 @@ module OpenSSL
       alias_method :send, :sendmsg
 
       def recvfrom(size, flags = nil)
+        data = nil
         if @non_blocking
           #STDERR.puts "starting recvfrom_nonblock sleep"
           sleep 1

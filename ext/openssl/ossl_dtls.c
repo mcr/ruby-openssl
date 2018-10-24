@@ -31,6 +31,11 @@ extern ID id_i_verify_callback;
 unsigned int cookie_secret_set = 0;
 unsigned char cookie_secret[16];
 
+enum connecting {
+  NOT_CONNECTED=0,
+  CONNECTED = 1
+};
+
 /*
  * generate a stateless cookie by creating a keyed HMAC-SHA256 for the cookie.
  * 1) The key is randomly generated if not already set and is kept constant.
@@ -254,7 +259,7 @@ ossl_dtlsctx_s_alloc(VALUE klass)
 #ifndef OPENSSL_NO_SOCK
 #if HAVE_DTLSV1_ACCEPT
 static VALUE
-ossl_dtls_setup(VALUE self)
+ossl_dtls_setup(VALUE self, enum connecting connecting)
 {
     VALUE io;
     SSL *ssl;
@@ -274,6 +279,14 @@ ossl_dtls_setup(VALUE self)
     bio = BIO_new_dgram(TO_SOCKET(fptr->fd), BIO_NOCLOSE);
     if(bio == NULL) {
       ossl_raise(eSSLError, "ossl_dtls_setup");
+    }
+    if(connecting) {
+      BIO_ADDR *peer = BIO_ADDR_new();
+      if(peer) {
+        (void)BIO_dgram_get_peer(bio, peer);
+        (void)BIO_ctrl_set_connected(bio, peer);
+        BIO_ADDR_free(peer);
+      }
     }
     SSL_set_bio(ssl, bio, bio);
 
@@ -307,7 +320,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     v_ctx = rb_ivar_get(self, id_i_context);
 
     /* make sure it's all setup */
-    ossl_dtls_setup(self);
+    ossl_dtls_setup(self, NOT_CONNECTED);
 
     GetSSL(self, ssl);
     GetOpenFile(rb_attr_get(self, id_i_io), fptr);
@@ -397,7 +410,7 @@ ossl_dtls_accept(int argc, VALUE *argv, VALUE self)
     VALUE io;
 
     rb_scan_args(argc, argv, "1", &io);
-    ossl_dtls_setup(self);
+    ossl_dtls_setup(self, NOT_CONNECTED);
 
     return ossl_dtls_start_accept(self, io, Qfalse);
 }
@@ -431,7 +444,7 @@ ossl_dtls_accept_nonblock(int argc, VALUE *argv, VALUE self)
     VALUE io;
 
     rb_scan_args(argc, argv, "1:", &io, &opts);
-    ossl_dtls_setup(self);
+    ossl_dtls_setup(self, NOT_CONNECTED);
 
     return ossl_dtls_start_accept(self, io, opts);
 }
@@ -465,9 +478,9 @@ ossl_dtls_connect_nonblock(int argc, VALUE *argv, VALUE self)
     VALUE opts;
     rb_scan_args(argc, argv, "0:", &opts);
 
-    ossl_dtls_setup(self);
+    ossl_dtls_setup(self, CONNECTED);
 
-    return ossl_start_ssl(self, SSL_connect, "SSL_connect", opts);
+    return ossl_start_ssl(self, SSL_connect, "SSL_connect_nonblock", opts);
 }
 
 /*
@@ -480,9 +493,9 @@ ossl_dtls_connect_nonblock(int argc, VALUE *argv, VALUE self)
 static VALUE
 ossl_dtls_connect(VALUE self)
 {
-    ossl_dtls_setup(self);
+  ossl_dtls_setup(self, CONNECTED);
 
-    return ossl_start_ssl(self, SSL_connect, "SSL_connect", Qfalse);
+  return ossl_start_ssl(self, SSL_connect, "SSL_connect", Qfalse);
 }
 
 
