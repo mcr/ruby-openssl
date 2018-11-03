@@ -100,9 +100,9 @@ unless result
   end
 end
 
-unless checking_for("OpenSSL version is 1.0.1 or later") {
-    try_static_assert("OPENSSL_VERSION_NUMBER >= 0x10001000L", "openssl/opensslv.h") }
-  raise "OpenSSL >= 1.0.1 or LibreSSL is required"
+unless checking_for("OpenSSL version is 1.1.1 or later") {
+    try_static_assert("OPENSSL_VERSION_NUMBER >= 0x10101000L", "openssl/opensslv.h") }
+  raise "OpenSSL >= 1.1.0 or LibreSSL is required"
 end
 
 Logging::message "=== Checking for OpenSSL features... ===\n"
