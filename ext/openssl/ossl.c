@@ -1162,6 +1162,7 @@ Init_openssl(void)
     Init_ossl_ocsp();
     Init_ossl_pkcs12();
     Init_ossl_pkcs7();
+    Init_ossl_cms();
     Init_ossl_pkey();
     Init_ossl_provider();
     Init_ossl_rand();
