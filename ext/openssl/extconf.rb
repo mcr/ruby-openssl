@@ -181,6 +181,7 @@ have_func("TS_VERIFY_CTX_add_flags")
 have_func("TS_RESP_CTX_set_time_cb")
 have_func("EVP_PBE_scrypt")
 have_func("SSL_CTX_set_post_handshake_auth")
+have_func("CMS_sign")
 
 Logging::message "=== Checking done. ===\n"
 
