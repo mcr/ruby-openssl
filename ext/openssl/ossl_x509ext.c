@@ -434,6 +434,51 @@ ossl_x509ext_to_der(VALUE obj)
 }
 
 /*
+ * call-seq:
+ *   ef.load_ext(ln_or_sn, "value", critical = false) -> X509::Extension
+ *   ef.load_ext(ln_or_sn, "critical,value")          -> X509::Extension
+ *
+ * Creates a new X509::Extension with passed values. See also x509v3_config(5).
+ */
+static VALUE
+ossl_x509extfactory_load_ext(int argc, VALUE *argv, VALUE self)
+{
+    X509V3_CTX *ctx;
+    X509_EXTENSION *ext;
+    VALUE oid, value, critical, valstr, obj;
+    int nid;
+    VALUE rconf;
+    CONF *conf;
+    const char *oid_cstr = NULL;
+
+CONF *app_load_config_bio(BIO *in, const char *filename)
+{
+    long errorline = -1;
+    CONF *conf;
+    int i;
+
+    conf = NCONF_new(NULL);
+    i = NCONF_load_bio(conf, in, &errorline);
+    if (i > 0)
+        return conf;
+
+    if (errorline <= 0) {
+        BIO_printf(bio_err, "%s: Can't load ", opt_getprog());
+    } else {
+        BIO_printf(bio_err, "%s: Error on line %ld of ", opt_getprog(),
+                   errorline);
+    }
+    if (filename != NULL)
+        BIO_printf(bio_err, "config file \"%s\"\n", filename);
+    else
+        BIO_printf(bio_err, "config input");
+
+    NCONF_free(conf);
+    return NULL;
+}
+
+
+/*
  * INIT
  */
 void
@@ -464,6 +509,7 @@ Init_ossl_x509ext(void)
     rb_define_method(cX509ExtFactory, "subject_request=", ossl_x509extfactory_set_subject_req, 1);
     rb_define_method(cX509ExtFactory, "crl=", ossl_x509extfactory_set_crl, 1);
     rb_define_method(cX509ExtFactory, "create_ext", ossl_x509extfactory_create_ext, -1);
+    rb_define_method(cX509ExtFactory, "load_ext", ossl_x509extfactory_load_ext, -1);
 
     cX509Ext = rb_define_class_under(mX509, "Extension", rb_cObject);
     rb_define_alloc_func(cX509Ext, ossl_x509ext_alloc);

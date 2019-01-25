@@ -1814,6 +1814,7 @@ do{\
 #endif
     rb_define_singleton_method(cASN1ObjectId, "register", ossl_asn1obj_s_register, 3);
     rb_define_method(cASN1ObjectId, "sn", ossl_asn1obj_get_sn, 0);
+    rb_define_method(cASN1ObjectId, "lookup", ossl_asn1obj_lookup_oid, 0);
     rb_define_method(cASN1ObjectId, "ln", ossl_asn1obj_get_ln, 0);
     rb_define_method(cASN1ObjectId, "oid", ossl_asn1obj_get_oid, 0);
     rb_define_alias(cASN1ObjectId, "short_name", "sn");
