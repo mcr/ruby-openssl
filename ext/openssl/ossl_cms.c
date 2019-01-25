@@ -487,6 +487,8 @@ Init_ossl_cms(void)
 
 #define DefCMSConst(x) rb_define_const(cCMS, #x, INT2NUM(CMS_##x))
 
+    DefCMSConst(NO_SIGNER_CERT_VERIFY);
+    DefCMSConst(NOINTERN);
     DefCMSConst(TEXT);
     DefCMSConst(NOCERTS);
     DefCMSConst(DETACHED);
