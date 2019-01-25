@@ -191,6 +191,40 @@ ok:
     return ossl_pkey_new(pkey);
 }
 
+/*
+ *  call-seq:
+ *     OpenSSL::PKey.read_derpub(string [, pwd ]) -> PKey
+ *     OpenSSL::PKey.read_derpub(io [, pwd ]) -> PKey
+ *
+ * Reads a DER encoded string from _string_ or _io_ and returns an
+ * instance of the a public key object.
+ *
+ * === Parameters
+ * * _string+ is a DER-encoded string containing an arbitrary public key.
+ * * _io_ is an instance of IO containing a DER-encoded
+ *   arbitrary public key.
+ */
+static VALUE
+ossl_pkey_new_pub_from_data(int argc, VALUE *argv, VALUE self)
+{
+    EVP_PKEY *pkey;
+    BIO *bio;
+    VALUE data;
+
+    rb_scan_args(argc, argv, "1", &data);
+
+    bio = ossl_obj2bio(&data);
+    if (!(pkey = d2i_PUBKEY_bio(bio, NULL))) {
+      OSSL_BIO_reset(bio);
+    }
+
+    BIO_free(bio);
+    if (!pkey)
+	ossl_raise(ePKeyError, "Could not parse PKey");
+
+    return ossl_pkey_new(pkey);
+}
+
 void
 ossl_pkey_check_public_key(const EVP_PKEY *pkey)
 {
@@ -612,6 +646,7 @@ Init_ossl_pkey(void)
     cPKey = rb_define_class_under(mPKey, "PKey", rb_cObject);
 
     rb_define_module_function(mPKey, "read", ossl_pkey_new_from_data, -1);
+    rb_define_module_function(mPKey, "read_derpub", ossl_pkey_new_pub_from_data, -1);
 
     rb_define_alloc_func(cPKey, ossl_pkey_alloc);
     rb_define_method(cPKey, "initialize", ossl_pkey_initialize, 0);
