@@ -333,6 +333,11 @@ ossl_x509name_inspect(VALUE self)
  *
  * Returns an Array representation of the distinguished name suitable for
  * passing to ::new
+ * The type code is an integer represents the string type.  Typical values include:
+ *   12 - UTF8STRING
+ *   19 - PRINTABLESTRING
+ * more values can be found, at, i.e:
+ *    https://docs.huihoo.com/doxygen/openssl/1.0.1c/crypto_2asn1_2asn1_8h.html
  */
 static VALUE
 ossl_x509name_to_a(VALUE self)

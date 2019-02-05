@@ -318,7 +318,12 @@ ossl_x509req_sign(VALUE self, VALUE key, VALUE digest)
 }
 
 /*
- * Checks that cert signature is made with PRIVversion of this PUBLIC 'key'
+ * call-seq:
+ *    request.verify(pub_key) => true/false
+ *
+ * Validates the signature on the CSR.  The public key is usually found
+ * in request.public_key.
+ *
  */
 static VALUE
 ossl_x509req_verify(VALUE self, VALUE key)
