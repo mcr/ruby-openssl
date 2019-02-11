@@ -1,4 +1,4 @@
-# coding: US-ASCII
+# coding: ASCII-8BIT
 # frozen_string_literal: false
 require_relative 'utils'
 
@@ -148,33 +148,28 @@ class OpenSSL::TestX509Name < OpenSSL::TestCase
   end
 
   def test_s_parse
-    dn = "/DC=org/DC=ruby-lang/CN=www.ruby-lang.org"
+    dn = "/DC=org/DC=ruby-lang/CN=www.ruby-lang.org/1.2.3.4.5.6=A=BCD"
     name = OpenSSL::X509::Name.parse(dn)
     assert_equal(dn, name.to_s)
     ary = name.to_a
-    assert_equal("DC", ary[0][0])
-    assert_equal("DC", ary[1][0])
-    assert_equal("CN", ary[2][0])
-    assert_equal("org", ary[0][1])
-    assert_equal("ruby-lang", ary[1][1])
-    assert_equal("www.ruby-lang.org", ary[2][1])
-    assert_equal(OpenSSL::ASN1::IA5STRING, ary[0][2])
-    assert_equal(OpenSSL::ASN1::IA5STRING, ary[1][2])
-    assert_equal(OpenSSL::ASN1::UTF8STRING, ary[2][2])
+    assert_equal [
+      ["DC", "org", OpenSSL::ASN1::IA5STRING],
+      ["DC", "ruby-lang", OpenSSL::ASN1::IA5STRING],
+      ["CN", "www.ruby-lang.org", OpenSSL::ASN1::UTF8STRING],
+      ["1.2.3.4.5.6", "A=BCD", OpenSSL::ASN1::UTF8STRING],
+    ], ary
 
-    dn2 = "DC=org, DC=ruby-lang, CN=www.ruby-lang.org"
+    dn2 = "DC=org, DC=ruby-lang, CN=www.ruby-lang.org, 1.2.3.4.5.6=A=BCD"
     name = OpenSSL::X509::Name.parse(dn2)
-    ary = name.to_a
     assert_equal(dn, name.to_s)
-    assert_equal("org", ary[0][1])
-    assert_equal("ruby-lang", ary[1][1])
-    assert_equal("www.ruby-lang.org", ary[2][1])
+    assert_equal ary, name.to_a
 
     name = OpenSSL::X509::Name.parse(dn2, @obj_type_tmpl)
     ary = name.to_a
     assert_equal(OpenSSL::ASN1::IA5STRING, ary[0][2])
     assert_equal(OpenSSL::ASN1::IA5STRING, ary[1][2])
     assert_equal(OpenSSL::ASN1::PRINTABLESTRING, ary[2][2])
+    assert_equal(OpenSSL::ASN1::PRINTABLESTRING, ary[3][2])
   end
 
   def test_s_parse_rfc2253
@@ -356,18 +351,70 @@ class OpenSSL::TestX509Name < OpenSSL::TestCase
     assert_equal("CN=unya,OU=b+OU=a,O=ruby-lang", dn.dup.to_s(OpenSSL::X509::Name::RFC2253))
   end
 
+  def test_to_s
+    dn = [
+      ["DC", "org"],
+      ["DC", "ruby-lang"],
+      ["CN", "フー, バー"],
+    ]
+    name = OpenSSL::X509::Name.new
+    dn.each { |x| name.add_entry(*x) }
+
+    assert_equal "/DC=org/DC=ruby-lang/" \
+      "CN=\\xE3\\x83\\x95\\xE3\\x83\\xBC, \\xE3\\x83\\x90\\xE3\\x83\\xBC",
+      name.to_s
+    # OpenSSL escapes characters with MSB by default
+    assert_equal \
+      "CN=\\E3\\83\\95\\E3\\83\\BC\\, \\E3\\83\\90\\E3\\83\\BC," \
+      "DC=ruby-lang,DC=org",
+      name.to_s(OpenSSL::X509::Name::RFC2253)
+    assert_equal "DC = org, DC = ruby-lang, " \
+      "CN = \"\\E3\\83\\95\\E3\\83\\BC, \\E3\\83\\90\\E3\\83\\BC\"",
+      name.to_s(OpenSSL::X509::Name::ONELINE)
+
+    empty = OpenSSL::X509::Name.new
+    assert_equal "", empty.to_s
+    assert_equal "", empty.to_s(OpenSSL::X509::Name::COMPAT)
+    assert_equal "", empty.to_s(OpenSSL::X509::Name::RFC2253)
+    assert_equal "", empty.to_s(OpenSSL::X509::Name::ONELINE)
+  end
+
+  def test_to_utf8
+    dn = [
+      ["DC", "org"],
+      ["DC", "ruby-lang"],
+      ["CN", "フー, バー"],
+    ]
+    name = OpenSSL::X509::Name.new
+    dn.each { |x| name.add_entry(*x) }
+
+    str = name.to_utf8
+    expected = "CN=フー\\, バー,DC=ruby-lang,DC=org".force_encoding("UTF-8")
+    assert_equal expected, str
+    assert_equal Encoding.find("UTF-8"), str.encoding
+
+    empty = OpenSSL::X509::Name.new
+    assert_equal "", empty.to_utf8
+  end
+
   def test_equals2
-    n1 = OpenSSL::X509::Name.parse 'CN=a'
-    n2 = OpenSSL::X509::Name.parse 'CN=a'
+    n1 = OpenSSL::X509::Name.parse_rfc2253 'CN=a'
+    n2 = OpenSSL::X509::Name.parse_rfc2253 'CN=a'
 
     assert_equal n1, n2
   end
 
   def test_spaceship
-    n1 = OpenSSL::X509::Name.parse 'CN=a'
-    n2 = OpenSSL::X509::Name.parse 'CN=b'
+    n1 = OpenSSL::X509::Name.new([["CN", "a"]])
+    n2 = OpenSSL::X509::Name.new([["CN", "a"]])
+    n3 = OpenSSL::X509::Name.new([["CN", "ab"]])
 
-    assert_equal(-1, n1 <=> n2)
+    assert_equal 0, n1 <=> n2
+    assert_equal -1, n1 <=> n3
+    assert_equal 0, n2 <=> n1
+    assert_equal -1, n2 <=> n3
+    assert_equal 1, n3 <=> n1
+    assert_equal 1, n3 <=> n2
   end
 
   def name_hash(name)

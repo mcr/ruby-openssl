@@ -24,6 +24,9 @@
 #include <openssl/ssl.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pkcs7.h>
+#if defined(HAVE_CMS_SIGN)
+#include <openssl/cms.h>
+#endif
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl/conf.h>
@@ -35,6 +38,11 @@
 #if !defined(OPENSSL_NO_OCSP)
 #  include <openssl/ocsp.h>
 #endif
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/dh.h>
 
 /*
  * Common Module
@@ -160,6 +168,7 @@ void ossl_debug(const char *, ...);
 #include "ossl_ocsp.h"
 #include "ossl_pkcs12.h"
 #include "ossl_pkcs7.h"
+#include "ossl_cms.h"
 #include "ossl_pkey.h"
 #include "ossl_rand.h"
 #include "ossl_ssl.h"

@@ -1,11 +1,11 @@
 Gem::Specification.new do |spec|
   spec.name          = "openssl"
-  spec.version       = "2.1.0"
-  spec.authors       = ["Martin Bosslet", "SHIBATA Hiroshi", "Zachary Scott", "Kazuki Yamaguchi"]
-  spec.email         = ["ruby-core@ruby-lang.org"]
+  spec.version       = "2.2.0-mcr1"
+  spec.authors       = ["Michael Richardson", "Martin Bosslet", "SHIBATA Hiroshi", "Zachary Scott", "Kazuki Yamaguchi"]
+  spec.email         = ["mcr@sandelman.ca","ruby-core@ruby-lang.org"]
   spec.summary       = %q{OpenSSL provides SSL, TLS and general purpose cryptography.}
-  spec.description   = %q{It wraps the OpenSSL library.}
-  spec.homepage      = "https://www.ruby-lang.org/"
+  spec.description   = %q{It wraps the OpenSSL library. Note this version depends upon an as-yet-unreleased version of OpenSSL. Built it from https://github.com/mcr/openssl/tree/dtls-listen-refactor.}
+  spec.homepage      = "https://github.com/mcr/ruby-openssl"
   spec.license       = "Ruby"
 
   spec.files         = Dir["lib/**/*.rb", "ext/**/*.{c,h,rb}", "*.md", "BSDL", "LICENSE.txt"]
@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.3.0"
 
+  spec.add_runtime_dependency "ipaddr"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "test-unit", "~> 3.0"

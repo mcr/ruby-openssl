@@ -250,14 +250,31 @@ ossl_x509name_to_s_old(VALUE self)
 {
     X509_NAME *name;
     char *buf;
-    VALUE str;
 
     GetX509Name(self, name);
     buf = X509_NAME_oneline(name, NULL, 0);
-    str = rb_str_new2(buf);
-    OPENSSL_free(buf);
+    if (!buf)
+	ossl_raise(eX509NameError, "X509_NAME_oneline");
+    return ossl_buf2str(buf, rb_long2int(strlen(buf)));
+}
 
-    return str;
+static VALUE
+x509name_print(VALUE self, unsigned long iflag)
+{
+    X509_NAME *name;
+    BIO *out;
+    int ret;
+
+    GetX509Name(self, name);
+    out = BIO_new(BIO_s_mem());
+    if (!out)
+	ossl_raise(eX509NameError, NULL);
+    ret = X509_NAME_print_ex(out, name, 0, iflag);
+    if (ret < 0 || (iflag == XN_FLAG_COMPAT && ret == 0)) {
+	BIO_free(out);
+	ossl_raise(eX509NameError, "X509_NAME_print_ex");
+    }
+    return ossl_membio2str(out);
 }
 
 /*
@@ -279,25 +296,35 @@ ossl_x509name_to_s_old(VALUE self)
 static VALUE
 ossl_x509name_to_s(int argc, VALUE *argv, VALUE self)
 {
-    X509_NAME *name;
-    VALUE flag, str;
-    BIO *out;
-    unsigned long iflag;
-
-    rb_scan_args(argc, argv, "01", &flag);
-    if (NIL_P(flag))
+    rb_check_arity(argc, 0, 1);
+    /* name.to_s(nil) was allowed */
+    if (!argc || NIL_P(argv[0]))
 	return ossl_x509name_to_s_old(self);
-    else iflag = NUM2ULONG(flag);
-    if (!(out = BIO_new(BIO_s_mem())))
-	ossl_raise(eX509NameError, NULL);
-    GetX509Name(self, name);
-    if (!X509_NAME_print_ex(out, name, 0, iflag)){
-	BIO_free(out);
-	ossl_raise(eX509NameError, NULL);
-    }
-    str = ossl_membio2str(out);
+    else
+	return x509name_print(self, NUM2ULONG(argv[0]));
+}
 
+/*
+ * call-seq:
+ *    name.to_utf8 -> string
+ *
+ * Returns an UTF-8 representation of the distinguished name, as specified
+ * in {RFC 2253}[https://www.ietf.org/rfc/rfc2253.txt].
+ */
+static VALUE
+ossl_x509name_to_utf8(VALUE self)
+{
+    VALUE str = x509name_print(self, XN_FLAG_RFC2253 & ~ASN1_STRFLGS_ESC_MSB);
+    rb_enc_associate_index(str, rb_utf8_encindex());
     return str;
+}
+
+/* :nodoc: */
+static VALUE
+ossl_x509name_inspect(VALUE self)
+{
+    return rb_enc_sprintf(rb_utf8_encoding(), "#<%"PRIsVALUE" %"PRIsVALUE">",
+			  rb_obj_class(self), ossl_x509name_to_utf8(self));
 }
 
 /*
@@ -306,6 +333,11 @@ ossl_x509name_to_s(int argc, VALUE *argv, VALUE self)
  *
  * Returns an Array representation of the distinguished name suitable for
  * passing to ::new
+ * The type code is an integer represents the string type.  Typical values include:
+ *   12 - UTF8STRING
+ *   19 - PRINTABLESTRING
+ * more values can be found, at, i.e:
+ *    https://docs.huihoo.com/doxygen/openssl/1.0.1c/crypto_2asn1_2asn1_8h.html
  */
 static VALUE
 ossl_x509name_to_a(VALUE self)
@@ -373,7 +405,7 @@ ossl_x509name_cmp(VALUE self, VALUE other)
 
     result = ossl_x509name_cmp0(self, other);
     if (result < 0) return INT2FIX(-1);
-    if (result > 1) return INT2FIX(1);
+    if (result > 0) return INT2FIX(1);
 
     return INT2FIX(0);
 }
@@ -475,6 +507,7 @@ ossl_x509name_to_der(VALUE self)
 void
 Init_ossl_x509name(void)
 {
+#undef rb_intern
     VALUE utf8str, ptrstr, ia5str, hash;
 
 #if 0
@@ -494,6 +527,8 @@ Init_ossl_x509name(void)
     rb_define_method(cX509Name, "initialize_copy", ossl_x509name_initialize_copy, 1);
     rb_define_method(cX509Name, "add_entry", ossl_x509name_add_entry, -1);
     rb_define_method(cX509Name, "to_s", ossl_x509name_to_s, -1);
+    rb_define_method(cX509Name, "to_utf8", ossl_x509name_to_utf8, 0);
+    rb_define_method(cX509Name, "inspect", ossl_x509name_inspect, 0);
     rb_define_method(cX509Name, "to_a", ossl_x509name_to_a, 0);
     rb_define_method(cX509Name, "cmp", ossl_x509name_cmp, 1);
     rb_define_alias(cX509Name, "<=>", "cmp");
