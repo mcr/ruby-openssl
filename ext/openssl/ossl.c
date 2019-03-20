@@ -1242,6 +1242,7 @@ Init_openssl(void)
     Init_ossl_engine();
     Init_ossl_asn1();
     Init_ossl_kdf();
+    Init_ies();
 
 #if defined(OSSL_DEBUG)
     /*
