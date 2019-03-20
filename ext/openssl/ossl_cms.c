@@ -190,6 +190,22 @@ ossl_cmsci_initialize(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
+/*
+ * call-seq:
+ *    cmscontent_info.verify(certs, certstore, data, flags) => true/false
+ *
+ * The list of certificates to trust is in the first argument.
+ * A set of available certificates that might help is in the second argument, but they
+ * are not trusted.
+ * The data to verify, if not inline to the cmscontent_info, is provided as a stream in "data".
+ * (nil if data is inline).
+ * The set of flags to apply is last, as an integer or of OPenSSL::CMS::flag below.
+ *
+ * The flags come from the set of:
+ *    NO_SIGNER_CERT_VERIFY
+ *    NOINTERN
+ *
+ */
 static VALUE
 ossl_cmsci_verify(int argc, VALUE *argv, VALUE self)
 {
