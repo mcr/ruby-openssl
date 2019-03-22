@@ -1,4 +1,4 @@
-#include "ies.h"
+#include "ossl_ies.h"
 
 static VALUE eIESError;
 extern const rb_data_type_t ossl_evp_pkey_type;
@@ -19,7 +19,6 @@ static EC_KEY *require_ec_key(VALUE self)
     ec = EVP_PKEY_get1_EC_KEY(pkey);
     if (ec == NULL)
 	rb_raise(eIESError, "EC_KEY is not initialized");
-    printf("checking ec = %p\n", ec);
     return ec;
 }
 
@@ -84,14 +83,11 @@ static VALUE ies_public_encrypt(VALUE self, VALUE clear_text)
     cryptogram_t *cryptogram;
 
     StringValue(clear_text);
-    printf("checked cipher_text\n");
 
     ctx = create_context(self);
-    printf("checking cipher_text\n");
     if (!EC_KEY_get0_public_key(ctx->user_key))
 	rb_raise(eIESError, "Given EC key is not public key");
 
-    printf("checked cipher_text\n");
     cryptogram = ecies_encrypt(ctx, (unsigned char*)RSTRING_PTR(clear_text), RSTRING_LEN(clear_text), error);
     if (cryptogram == NULL) {
 	free(ctx);
@@ -119,9 +115,7 @@ static VALUE ies_private_decrypt(VALUE self, VALUE cipher_text)
     size_t length;
     unsigned char *data;
 
-    printf("checking cipher_text\n");
     StringValue(cipher_text);
-    printf("checked cipher_text\n");
 
     ctx = create_context(self);
     if (!EC_KEY_get0_private_key(ctx->user_key))
@@ -146,7 +140,7 @@ static VALUE ies_private_decrypt(VALUE self, VALUE cipher_text)
  * INIT
  */
 void
-Init_ies(void)
+Init_ossl_ies(void)
 {
     static VALUE cIES;
     VALUE cEC;

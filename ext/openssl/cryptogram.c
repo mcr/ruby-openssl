@@ -8,7 +8,7 @@
  *
  */
 
-#include "ies.h"
+#include "ossl_ies.h"
 #define HEADSIZE (sizeof(cryptogram_head_t))
 
 size_t cryptogram_key_length(const cryptogram_t *cryptogram) {

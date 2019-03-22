@@ -8,7 +8,7 @@
  *
  */
 
-#include "ies.h"
+#include "ossl_ies.h"
 #include <openssl/ecdh.h>
 
 #define SET_ERROR(string) \
