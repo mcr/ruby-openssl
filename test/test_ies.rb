@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-require 'minitest/autorun'
+require_relative 'utils'
 
-Minitest.autorun
+if defined?(OpenSSL)
 
-class TestIES < Minitest::Test
+class OpenSSL::TestIES < OpenSSL::TestCase
   def setup
     test_key = File.read(File.expand_path(File.join(__FILE__, '..', 'test_key.pem')))
     @ec = OpenSSL::PKey::EC::IES.new(test_key, "placeholder")
@@ -20,4 +20,12 @@ class TestIES < Minitest::Test
     result = @ec.private_decrypt(cryptogram)
     assert_equal source, result.force_encoding('UTF-8')
   end
+
+  def test_encrypt_only
+    source = 'This is a simple test'
+    cryptogram = @ec.public_encrypt(source)
+    assert cryptogram
+  end
+end
+
 end
