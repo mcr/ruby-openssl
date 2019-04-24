@@ -160,7 +160,7 @@ have_func("X509_STORE_up_ref")
 have_func("SSL_SESSION_up_ref")
 have_func("EVP_PKEY_up_ref")
 
-# added after 1.1.0
+# added after 1.1.1
 have_func("DTLSv1_accept")
 
 OpenSSL.check_func_or_macro("SSL_CTX_set_tmp_ecdh_callback", "openssl/ssl.h") # removed

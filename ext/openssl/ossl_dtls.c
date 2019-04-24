@@ -73,6 +73,7 @@ static void print_cookie(const char *label, const unsigned char cookie[], const 
 #define PRINT_COOKIE(label, cookie, len) {} while(0)
 #endif
 
+#if HAVE_DTLSV1_ACCEPT
 static void cookie_calculate(unsigned char cookie[],
                              unsigned int  *cookie_len,
                              BIO_ADDR *peer,
@@ -217,6 +218,7 @@ static int cookie_verify(SSL *ssl, const unsigned char *peer_cookie,
     if(peer) BIO_ADDR_free(peer);
     return ret;
 }
+#endif /* HAVE_DTLSV1_ACCEPT */
 
 
 static VALUE
