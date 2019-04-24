@@ -261,7 +261,6 @@ ossl_dtlsctx_s_alloc(VALUE klass)
 }
 
 #ifndef OPENSSL_NO_SOCK
-#if HAVE_DTLSV1_ACCEPT
 static VALUE
 ossl_dtls_setup(VALUE self, enum connecting connecting)
 {
@@ -297,6 +296,7 @@ ossl_dtls_setup(VALUE self, enum connecting connecting)
     return Qtrue;
 }
 
+#if HAVE_DTLSV1_ACCEPT
 /*
  * call-seq:
  *    ssl.accept => self
