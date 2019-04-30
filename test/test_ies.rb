@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 require_relative 'utils'
+require 'byebug'
 
 if defined?(OpenSSL)
 
