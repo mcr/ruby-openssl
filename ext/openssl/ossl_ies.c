@@ -3,7 +3,7 @@
 static VALUE eIESError;
 extern const rb_data_type_t ossl_evp_pkey_type;
 
-static EC_KEY *require_ec_key(VALUE self)
+static EC_KEY *require_ec_key(VALUE self, size_t *p_key_length)
 {
     EVP_PKEY *pkey;
     EC_KEY *ec;
@@ -19,6 +19,19 @@ static EC_KEY *require_ec_key(VALUE self)
     ec = EVP_PKEY_get1_EC_KEY(pkey);
     if (ec == NULL)
 	rb_raise(eIESError, "EC_KEY is not initialized");
+
+    if(p_key_length) {
+      /* figure out how big the key will be so that cryptogram can be allocated
+       * correctly for storing the ephemeral key in octets
+       */
+      size_t needed_length;
+      needed_length = EC_POINT_point2oct(EC_KEY_get0_group(ec),
+                                         EC_KEY_get0_public_key(ec),
+                                         POINT_CONVERSION_COMPRESSED,
+                                         NULL, 0, NULL);
+      *p_key_length = needed_length;
+    }
+
     return ec;
 }
 
@@ -28,8 +41,7 @@ static ies_ctx_t *create_context(VALUE self)
     ctx->cipher = EVP_aes_128_cbc();
     ctx->md = EVP_sha1();
     ctx->kdf_md = EVP_sha1();
-    ctx->stored_key_length = 25;
-    ctx->user_key = require_ec_key(self);
+    ctx->user_key = require_ec_key(self, &ctx->stored_key_length);
 
     return ctx;
 }
@@ -145,7 +157,7 @@ Init_ossl_ies(void)
     static VALUE cIES;
     VALUE cEC;
 
-    rb_require("openssl");
+    //rb_require("openssl");
     cEC = rb_path2class("OpenSSL::PKey::EC");
 
     /* Document-class: OpenSSL::PKey::EC::IES
