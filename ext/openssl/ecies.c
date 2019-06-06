@@ -22,8 +22,12 @@
 
 /* Key derivation function from X9.62/SECG */
 /* Way more than we will ever need */
+
+/* note this was renamed, because it was obsoleted in openssl 1.1.x, and
+ * the symbols classh, and cause core dumps
+ */
 #define ECDH_KDF_MAX (1 << 30)
-int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+int ecies_ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
 		   const unsigned char *Z, size_t Zlen,
 		   const unsigned char *sinfo, size_t sinfolen,
 		   const EVP_MD *md)
@@ -150,7 +154,7 @@ static unsigned char *prepare_envelope_key(const ies_ctx_t *ctx, cryptogram_t *c
     }
 
     /* equals to ISO 18033-2 KDF2 */
-    if (!ECDH_KDF_X9_62(envelope_key, key_buf_len, ktmp, ecdh_key_len, 0, 0, ctx->kdf_md)) {
+    if (!ecies_ECDH_KDF_X9_62(envelope_key, key_buf_len, ktmp, ecdh_key_len, 0, 0, ctx->kdf_md)) {
 	SET_OSSL_ERROR("Failed to stretch with KDF2");
 	goto err;
     }
@@ -420,7 +424,7 @@ unsigned char *restore_envelope_key(const ies_ctx_t *ctx, const cryptogram_t *cr
     }
 
     /* equals to ISO 18033-2 KDF2 */
-    if (!ECDH_KDF_X9_62(envelope_key, key_buf_len, ktmp, ecdh_key_len, 0, 0, ctx->kdf_md)) {
+    if (!ecies_ECDH_KDF_X9_62(envelope_key, key_buf_len, ktmp, ecdh_key_len, 0, 0, ctx->kdf_md)) {
 	SET_OSSL_ERROR("Failed to stretch with KDF2");
 	goto err;
     }
