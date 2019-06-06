@@ -90,9 +90,12 @@ static VALUE ies_initialize(VALUE self, VALUE key, VALUE algo)
 static VALUE ies_public_encrypt(VALUE self, VALUE clear_text)
 {
     ies_ctx_t *ctx;
-    char error[1024] = "Unknown error";
+    char error[1024];
     VALUE cipher_text;
     cryptogram_t *cryptogram;
+
+    strcpy(error, "Unknown error");
+    if(NIL_P(clear_text)) return Qnil;
 
     StringValue(clear_text);
 
@@ -126,6 +129,8 @@ static VALUE ies_private_decrypt(VALUE self, VALUE cipher_text)
     cryptogram_t *cryptogram;
     size_t length;
     unsigned char *data;
+
+    if(NIL_P(cipher_text)) return Qnil;
 
     StringValue(cipher_text);
 
