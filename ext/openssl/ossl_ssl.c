@@ -1672,6 +1672,7 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
 	case SSL_ERROR_SYSCALL:
 	    if (errno) rb_sys_fail(funcname);
 	    ossl_raise(eSSLError, "%s SYSCALL returned=%d errno=%d state=%s", funcname, ret2, errno, SSL_state_string_long(ssl));
+            /* FALLTHROUGH */
 #if defined(SSL_R_CERTIFICATE_VERIFY_FAILED)
 	case SSL_ERROR_SSL:
 	    err = ERR_peek_last_error();
@@ -1689,6 +1690,7 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
 			   err_msg, verify_msg);
 	    }
 #endif
+            /* FALLTHROUGH */
 	default:
 	    ossl_raise(eSSLError, "%s returned=%d errno=%d state=%s", funcname, ret2, errno, SSL_state_string_long(ssl));
 	}
@@ -1864,6 +1866,7 @@ ossl_ssl_read_internal(int argc, VALUE *argv, VALUE self, int nonblock)
 			rb_eof_error();
 		    }
 		}
+                /* FALLTHROUGH */
 	    default:
 		ossl_raise(eSSLError, "SSL_read");
 	    }
@@ -1960,6 +1963,7 @@ ossl_ssl_write_internal(VALUE self, VALUE str, VALUE opts)
                 continue;
 	    case SSL_ERROR_SYSCALL:
 		if (errno) rb_sys_fail(0);
+                /* FALLTHROUGH */
 	    default:
 		ossl_raise(eSSLError, "SSL_write");
 	    }
