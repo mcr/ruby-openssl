@@ -46,6 +46,9 @@ if $mingw
   have_library 'ssp'
 end
 
+append_ldflags "-lpthread"
+append_ldflags "-ldl"
+
 def find_openssl_library
   if $mswin || $mingw
     # required for static OpenSSL libraries
