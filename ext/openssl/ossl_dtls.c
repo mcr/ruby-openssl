@@ -16,6 +16,8 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 VALUE cDTLSContext;
 VALUE cDTLSSocket;
@@ -342,6 +344,15 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
       goto end;
     }
 
+    /* set O_NONBLOCK on nsock->fd */
+    {
+      int flags = fcntl(nsock->fd, F_GETFL, 0);
+      if(fcntl(nsock->fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        fprintf(stderr, "fcntl to non-blocking: %s\n", strerror(errno));
+        goto end;
+      }
+    }
+
     ret = 0;
     while(ret == 0) {
       ret = DTLSv1_accept(ssl, sslnew, peer, nsock->fd);
@@ -384,8 +395,9 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     dtls_child = TypedData_Wrap_Struct(cDTLSSocket, &ossl_ssl_type, NULL);
 
     /* connect them up. */
-    if (!sslnew)
+    if (!sslnew) {
       ossl_raise(eSSLError, NULL);
+    }
     RTYPEDDATA_DATA(dtls_child) = sslnew;
 
     /* setup a new IO object for the FD attached to the dtls_child */
@@ -421,13 +433,14 @@ ossl_dtls_accept(int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
- *    ssl.accept_nonblock([options]) => self
+ *    ssl.accept_nonblock(newsock, [options]) => self
  *
  * Initiates the SSL/TLS handshake as a server in non-blocking manner.
  *
  *   # emulates blocking accept
+ *   newsock   = UDPSocket.new(@af)
  *   begin
- *     ssl.accept_nonblock
+ *     ssl.accept_nonblock(newsock)
  *   rescue IO::WaitReadable
  *     IO.select([s2])
  *     retry
@@ -435,6 +448,9 @@ ossl_dtls_accept(int argc, VALUE *argv, VALUE self)
  *     IO.select(nil, [s2])
  *     retry
  *   end
+ *
+ * The newsock is allocated by the caller, because they might need to do stuff
+ * to it in order to fit it into event loops, etc.
  *
  * By specifying a keyword argument _exception_ to +false+, you can indicate
  * that accept_nonblock should not raise an IO::WaitReadable or
@@ -446,13 +462,16 @@ ossl_dtls_accept_nonblock(int argc, VALUE *argv, VALUE self)
 {
     VALUE opts;
     VALUE io;
+    VALUE ret;
 
     rb_scan_args(argc, argv, "1:", &io, &opts);
     ossl_dtls_setup(self, NOT_CONNECTED);
 
-    return ossl_dtls_start_accept(self, io, opts);
+    ret = ossl_dtls_start_accept(self, io, opts);
+    return ret;
 }
 #endif
+
 
 /*
  * call-seq:
@@ -519,6 +538,9 @@ Init_ossl_dtls(void)
      */
     mSSL = rb_define_module_under(mOSSL, "SSL");
     eSSLError = rb_define_class_under(mSSL, "SSLError", eOSSLError);
+
+    /* say hello. This also makes sure correct library is linked */
+    DTLSv1_welcome(void);
 
     /* Document-class: OpenSSL::SSL::DTLSContext
      *
