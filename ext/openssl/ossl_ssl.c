@@ -1737,7 +1737,9 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
     GetSSL(self, ssl);
 
     GetOpenFile(rb_attr_get(self, id_i_io), fptr);
+    fprintf(stderr, "starting start_ssl loop\n");
     for(;;){
+      fprintf(stderr, "calling func\n");
 	ret = func(ssl);
 
 	cb_state = rb_attr_get(self, ID_callback_state);
@@ -1752,11 +1754,13 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
 
 	switch((ret2 = ssl_get_error(ssl, ret))){
 	case SSL_ERROR_WANT_WRITE:
+          fprintf(stderr, "want_write\n");
             if (no_exception_p(opts)) { return sym_wait_writable; }
             write_would_block(nonblock);
             rb_io_wait_writable(fptr->fd);
             continue;
 	case SSL_ERROR_WANT_READ:
+          fprintf(stderr, "want_read\n");
             if (no_exception_p(opts)) { return sym_wait_readable; }
             read_would_block(nonblock);
             rb_io_wait_readable(fptr->fd);

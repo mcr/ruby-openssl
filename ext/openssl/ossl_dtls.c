@@ -58,7 +58,7 @@ static void cookie_secret_setup(void)
 }
 
 #define DTLS_COOKIE_DEBUG 0
-#define DTLS_DEBUG 0
+#define DTLS_DEBUG 1
 
 #if DTLS_COOKIE_DEBUG
 static void print_cookie(const char *label, const unsigned char cookie[], const unsigned int cookie_len)
@@ -328,19 +328,24 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     /* make sure it's all setup */
     ossl_dtls_setup(self, NOT_CONNECTED);
 
+    fprintf(stderr, "dtls_setup done\n");
     GetSSL(self, ssl);
     GetOpenFile(rb_attr_get(self, id_i_io), fptr);
     GetOpenFile(io, nsock);
 
+    fprintf(stderr, "dtls_setup alloc\n");
     /* allocate a new SSL* for the connection */
     sslnew = SSL_new(SSL_get_SSL_CTX(ssl));
 
     peer = BIO_ADDR_new();
 
     if(setsockopt(fptr->fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
+      fprintf(stderr, "sockopt 1\n");
       goto end;
     }
+
     if(setsockopt(nsock->fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
+      fprintf(stderr, "sockopt 2 for fd %d: %s\n", nsock->fd, strerror(errno));
       goto end;
     }
 
@@ -355,10 +360,11 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
 
     ret = 0;
     while(ret == 0) {
+      fprintf(stderr, "calling DTLSv1_accept, listenfd=%d nsock=%d\n", fptr->fd, nsock->fd);
       ret = DTLSv1_accept(ssl, sslnew, peer, nsock->fd);
 
       if(ret == 0) {
-        if(DTLS_DEBUG) printf("returned 0, waiting for more data\n");
+        if(DTLS_DEBUG) fprintf(stderr, "returned 0, waiting for more data\n");
         if (no_exception_p(opts)) { return sym_wait_readable; }
         read_would_block(nonblock);
         rb_io_wait_readable(fptr->fd);
@@ -368,6 +374,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     if(ret == -1) {
       /* this is an error */
       ossl_raise(eSSLError, "%s SYSCALL returned=%d errno=%d state=%s", "DTLSv1_listen", ret, errno, SSL_state_string_long(ssl));
+      fprintf(stderr, "sysctall returned 3\n");
       return self;
     }
 
@@ -382,7 +389,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     {
       char *peername= BIO_ADDR_hostname_string(peer, 1);
       if(peername) {
-        printf("peername: %s\n", peername);
+        fprintf(stderr, "peername: %s\n", peername);
         OPENSSL_free(peername);
       }
     }
@@ -394,8 +401,10 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     /* create a new ruby object */
     dtls_child = TypedData_Wrap_Struct(cDTLSSocket, &ossl_ssl_type, NULL);
 
+    fprintf(stderr, "got dtls child\n");
     /* connect them up. */
     if (!sslnew) {
+      fprintf(stderr, "got dtls child, but sslnew is NULL\n");
       ossl_raise(eSSLError, NULL);
     }
     RTYPEDDATA_DATA(dtls_child) = sslnew;
@@ -409,11 +418,12 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     SSL_set_ex_data(sslnew, ossl_ssl_ex_vcb_idx, (void *)verify_cb);
 
     /* start the DTLS on it */
+    fprintf(stderr, "calling start_ssl for child\n");
     ret_value = ossl_start_ssl(dtls_child, SSL_accept, "SSL_accept", Qfalse);
 
-    if(DTLS_DEBUG) printf("completed ossl_start_ssl\n");
 
  end:
+    if(DTLS_DEBUG) printf("end of ossl_start_ssl\n");
     if(peer) BIO_ADDR_free(peer);
     peer = NULL;
 
@@ -467,7 +477,9 @@ ossl_dtls_accept_nonblock(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "1:", &io, &opts);
     ossl_dtls_setup(self, NOT_CONNECTED);
 
+    fprintf(stderr, "nonblock working away\n");
     ret = ossl_dtls_start_accept(self, io, opts);
+    fprintf(stderr, "nonblock finishing away\n");
     return ret;
 }
 #endif
