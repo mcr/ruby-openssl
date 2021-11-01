@@ -194,4 +194,7 @@ Logging::message "=== Checking done. ===\n"
 
 create_header
 create_makefile("openssl")
+
+LOCAL_LIBS="/sandel/3rd/openssl-dtls-api/lib/libssl.a /sandel/3rd/openssl-dtls-api/lib/libcrypto.a"
+
 Logging::message "Done.\n"
