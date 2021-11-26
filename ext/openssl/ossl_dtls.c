@@ -419,6 +419,10 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
 
     /* start the DTLS on it */
     fprintf(stderr, "calling start_ssl for child\n");
+
+    if (!SSL_set_fd(sslnew, TO_SOCKET(nsock->fd)))
+	ossl_raise(eSSLError, "SSL_set_fd");
+
     ret_value = ossl_start_ssl(dtls_child, SSL_accept, "SSL_accept", Qfalse);
 
 
