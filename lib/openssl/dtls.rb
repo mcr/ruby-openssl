@@ -53,20 +53,14 @@ module OpenSSL
       attr_accessor :connected
       attr_accessor :dsthost, :dstport
       attr_accessor :non_blocking
+      include Buffering
+
+      def initialize(*)
+        super
+      end
 
       def connected?
         !!@connected
-      end
-
-      # call-seq:
-      #   ssl.session -> aSession
-      #
-      # Returns the SSLSession object currently used, or nil if the session is
-      # not established.
-      def session
-        SSL::Session.new(self)
-      rescue SSL::Session::SessionError
-        nil
       end
 
       def sync
@@ -137,12 +131,13 @@ module OpenSSL
         @svr.shutdown(how)
       end
 
-      # Works similar to TCPServer#accept.
-      def accept
+      # Works similar to TCPServer#accept, but accepts an unbound UDP socket
+      # on which the new connection will be placed.
+      def accept(newsock)
         # Socket#accept returns [socket, addrinfo].
         # TCPServer#accept returns a socket.
         # The following comma strips addrinfo.
-        sock, = @svr.accept
+        sock, = @svr.accept(newsock)
         begin
           ssl = OpenSSL::SSL::DTLSSocket.new(sock, @ctx)
           ssl.sync_close = true

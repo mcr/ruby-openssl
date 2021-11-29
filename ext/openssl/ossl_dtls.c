@@ -308,6 +308,9 @@ ossl_dtls_setup(VALUE self, enum connecting connecting)
  *
  * This uses an OpenSSL extension DTLSv1_accept(), which handles cloning the
  * the file descriptor and creating a new SSL context.
+ *
+ * io should be an initialized DTLSSocket that has a file descriptor contained within.
+ *
  */
 static VALUE
 ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
@@ -317,7 +320,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     SSL *sslnew;
     BIO_ADDR   *peer;
     rb_io_t *fptr, *nsock;
-    VALUE dtls_child, ret_value = Qnil;
+    VALUE    ret_value = Qnil;
     int ret;
     VALUE v_ctx, verify_cb;
     int one         = 1;
@@ -328,14 +331,12 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     /* make sure it's all setup */
     ossl_dtls_setup(self, NOT_CONNECTED);
 
-    fprintf(stderr, "dtls_setup done\n");
     GetSSL(self, ssl);
     GetOpenFile(rb_attr_get(self, id_i_io), fptr);
-    GetOpenFile(io, nsock);
+    GetOpenFile(rb_attr_get(io,   id_i_io), nsock);
 
-    fprintf(stderr, "dtls_setup alloc\n");
-    /* allocate a new SSL* for the connection */
-    sslnew = SSL_new(SSL_get_SSL_CTX(ssl));
+    /* find the SSL* for the connection */
+    GetSSL(io, sslnew);
 
     peer = BIO_ADDR_new();
 
@@ -360,7 +361,7 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
 
     ret = 0;
     while(ret == 0) {
-      fprintf(stderr, "calling DTLSv1_accept, listenfd=%d nsock=%d\n", fptr->fd, nsock->fd);
+      if(DTLS_DEBUG) fprintf(stderr, "calling DTLSv1_accept, listenfd=%d nsock=%d\n", fptr->fd, nsock->fd);
       ret = DTLSv1_accept(ssl, sslnew, peer, nsock->fd);
 
       if(ret == 0) {
@@ -374,7 +375,6 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
     if(ret == -1) {
       /* this is an error */
       ossl_raise(eSSLError, "%s SYSCALL returned=%d errno=%d state=%s", "DTLSv1_listen", ret, errno, SSL_state_string_long(ssl));
-      fprintf(stderr, "sysctall returned 3\n");
       return self;
     }
 
@@ -397,34 +397,19 @@ ossl_dtls_start_accept(VALUE self, VALUE io, VALUE opts)
 
     /* sslnew contains an initialized SSL, which has a new socket connected to it */
 
-    /* new_sock is now setup, need to allocate new SSL context and insert socket into new bio */
-    /* create a new ruby object */
-    dtls_child = TypedData_Wrap_Struct(cDTLSSocket, &ossl_ssl_type, NULL);
-
-    fprintf(stderr, "got dtls child\n");
     /* connect them up. */
     if (!sslnew) {
-      fprintf(stderr, "got dtls child, but sslnew is NULL\n");
       ossl_raise(eSSLError, NULL);
     }
-    RTYPEDDATA_DATA(dtls_child) = sslnew;
 
-    /* setup a new IO object for the FD attached to the dtls_child */
-    rb_ivar_set(dtls_child, id_i_io, io);
-
-    SSL_set_ex_data(sslnew, ossl_ssl_ex_ptr_idx, (void *)dtls_child);
+    SSL_set_ex_data(sslnew, ossl_ssl_ex_ptr_idx, (void *)io);
     SSL_set_info_callback(sslnew, ssl_info_cb);
     verify_cb = rb_attr_get(v_ctx, id_i_verify_callback);
     SSL_set_ex_data(sslnew, ossl_ssl_ex_vcb_idx, (void *)verify_cb);
 
     /* start the DTLS on it */
-    fprintf(stderr, "calling start_ssl for child\n");
-
-    if (!SSL_set_fd(sslnew, TO_SOCKET(nsock->fd)))
-	ossl_raise(eSSLError, "SSL_set_fd");
-
-    ret_value = ossl_start_ssl(dtls_child, SSL_accept, "SSL_accept", Qfalse);
-
+    ossl_ssl_setup(io);
+    ret_value = ossl_start_ssl(io, SSL_accept, "SSL_accept", Qfalse);
 
  end:
     if(DTLS_DEBUG) printf("end of ossl_start_ssl\n");
@@ -481,9 +466,7 @@ ossl_dtls_accept_nonblock(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "1:", &io, &opts);
     ossl_dtls_setup(self, NOT_CONNECTED);
 
-    fprintf(stderr, "nonblock working away\n");
     ret = ossl_dtls_start_accept(self, io, opts);
-    fprintf(stderr, "nonblock finishing away\n");
     return ret;
 }
 #endif
@@ -556,7 +539,7 @@ Init_ossl_dtls(void)
     eSSLError = rb_define_class_under(mSSL, "SSLError", eOSSLError);
 
     /* say hello. This also makes sure correct library is linked */
-    DTLSv1_welcome(void);
+    DTLSv1_welcome();
 
     /* Document-class: OpenSSL::SSL::DTLSContext
      *

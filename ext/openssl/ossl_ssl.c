@@ -1670,7 +1670,7 @@ ossl_ssl_initialize(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-static VALUE
+VALUE
 ossl_ssl_setup(VALUE self)
 {
     VALUE io;
@@ -1741,16 +1741,20 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
     for(;;){
       fprintf(stderr, "calling func\n");
 	ret = func(ssl);
+      fprintf(stderr, "finished func\n");
 
 	cb_state = rb_attr_get(self, ID_callback_state);
         if (!NIL_P(cb_state)) {
 	    /* must cleanup OpenSSL error stack before re-raising */
+          fprintf(stderr, "Clearing error\n");
 	    ossl_clear_error();
 	    rb_jump_tag(NUM2INT(cb_state));
 	}
 
-	if (ret > 0)
+        fprintf(stderr, "start ret = %d\n", ret);
+	if (ret > 0) {
 	    break;
+        }
 
 	switch((ret2 = ssl_get_error(ssl, ret))){
 	case SSL_ERROR_WANT_WRITE:
@@ -1772,6 +1776,10 @@ ossl_start_ssl(VALUE self, int (*func)(), const char *funcname, VALUE opts)
 #if defined(SSL_R_CERTIFICATE_VERIFY_FAILED)
 	case SSL_ERROR_SSL:
 	    err = ERR_peek_last_error();
+            { char errbuf[256];
+              ERR_error_string_n(err, errbuf, sizeof(errbuf));
+              fprintf(stderr, "SSL_ERROR_SSL: %s\n", errbuf);
+            }
 	    if (ERR_GET_LIB(err) == ERR_LIB_SSL &&
 		ERR_GET_REASON(err) == SSL_R_CERTIFICATE_VERIFY_FAILED) {
 		const char *err_msg = ERR_reason_error_string(err),
@@ -1885,6 +1893,7 @@ ossl_ssl_accept_nonblock(int argc, VALUE *argv, VALUE self)
 {
     VALUE opts;
 
+    fprintf(stderr, "ssl_accept_nonblock working away\n");
     rb_scan_args(argc, argv, "0:", &opts);
     ossl_ssl_setup(self);
 
@@ -1921,6 +1930,7 @@ ossl_ssl_read_internal(int argc, VALUE *argv, VALUE self, int nonblock)
 	return str;
 
     GetSSL(self, ssl);
+    fprintf(stderr, "object %p returns ssl: %p\n", self, ssl);
     io = rb_attr_get(self, id_i_io);
     GetOpenFile(io, fptr);
     if (ssl_started(ssl)) {

@@ -43,11 +43,13 @@ static inline int
 ssl_started(SSL *ssl)
 {
     /* the FD is set in ossl_ssl_setup(), called by #connect or #accept */
+    fprintf(stderr, "started(%p) %d\n", ssl, SSL_get_fd(ssl));
     return SSL_get_fd(ssl) >= 0;
 }
 
 extern ID id_i_io, id_i_context, id_i_hostname;
 
+extern VALUE ossl_ssl_setup(VALUE self);
 extern VALUE ossl_start_ssl(VALUE self, int (*func)(),
                             const char *funcname, VALUE opts);
 
