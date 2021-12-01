@@ -43,7 +43,7 @@ static inline int
 ssl_started(SSL *ssl)
 {
     /* the FD is set in ossl_ssl_setup(), called by #connect or #accept */
-    fprintf(stderr, "started(%p) %d\n", ssl, SSL_get_fd(ssl));
+    //fprintf(stderr, "started(%p) %d\n", ssl, SSL_get_fd(ssl));
     return SSL_get_fd(ssl) >= 0;
 }
 
