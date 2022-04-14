@@ -30,6 +30,8 @@ if with_config("debug") or enable_config("debug")
   $defs.push("-DOSSL_DEBUG")
 end
 
+$LOCAL_LIBS="/sandel/3rd/openssl-dtls-api/lib/libssl.a /sandel/3rd/openssl-dtls-api/lib/libcrypto.a -lpthread -ldl"
+
 Logging::message "=== Checking for system dependent stuff... ===\n"
 have_library("nsl", "t_open")
 have_library("socket", "socket")
@@ -38,7 +40,6 @@ if $mswin || $mingw
 end
 
 Logging::message "=== Checking for required stuff... ===\n"
-result = pkg_config("openssl") && have_header("openssl/ssl.h")
 
 if $mingw
   append_cflags '-D_FORTIFY_SOURCE=2'
@@ -48,8 +49,11 @@ end
 
 append_ldflags "-lpthread"
 append_ldflags "-ldl"
+append_ldflags "-L/sandel/3rd/openssl-dtls-api/lib"
 
 def find_openssl_library
+  pkg_config("openssl") && have_header("openssl/ssl.h")
+
   if $mswin || $mingw
     # required for static OpenSSL libraries
     have_library("gdi32") # OpenSSL <= 1.0.2 (for RAND_screen())
@@ -58,14 +62,14 @@ def find_openssl_library
 
   return false unless have_header("openssl/ssl.h")
 
-  ret = have_library("crypto", "CRYPTO_malloc") &&
-    have_library("ssl", "SSL_new")
+  ret = have_library("crypto", "CRYPTO_malloc", "openssl/ssl.h") &&
+    have_library("ssl", "SSL_new", "openssl/ssl.h")
   return ret if ret
 
   if $mswin
     # OpenSSL >= 1.1.0: libcrypto.lib and libssl.lib.
-    if have_library("libcrypto", "CRYPTO_malloc") &&
-        have_library("libssl", "SSL_new")
+    if have_library("libcrypto", "CRYPTO_malloc", ["openssl/ssl.h"]) &&
+        have_library("libssl", "SSL_new", ["openssl/ssl.h"])
       return true
     end
 
@@ -99,14 +103,12 @@ def find_openssl_library
   return false
 end
 
-unless result
-  unless find_openssl_library
-    Logging::message "=== Checking for required stuff failed. ===\n"
-    Logging::message "Makefile wasn't created. Fix the errors above.\n"
-    raise "OpenSSL library could not be found. You might want to use " \
-      "--with-openssl-dir=<dir> option to specify the prefix where OpenSSL " \
-      "is installed."
-  end
+unless find_openssl_library
+  Logging::message "=== Checking for required stuff failed. ===\n"
+  Logging::message "Makefile wasn't created. Fix the errors above.\n"
+  raise "OpenSSL library could not be found. You might want to use " \
+        "--with-openssl-dir=<dir> option to specify the prefix where OpenSSL " \
+        "is installed."
 end
 
 unless checking_for("OpenSSL version is 1.1.1 or later") {
@@ -116,7 +118,7 @@ end
 
 Logging::message "=== Checking for OpenSSL features... ===\n"
 # compile options
-have_func("RAND_egd")
+have_func("RAND_egd", "openssl/ssl.h")
 engines = %w{builtin_engines openbsd_dev_crypto dynamic 4758cca aep atalla chil
              cswift nuron sureware ubsec padlock capi gmp gost cryptodev aesni
              cloudhsm}
@@ -129,70 +131,68 @@ if ($mswin || $mingw) && have_macro("LIBRESSL_VERSION_NUMBER", "openssl/opensslv
 end
 
 # added in 1.0.2
-have_func("EC_curve_nist2nid")
-have_func("X509_REVOKED_dup")
-have_func("X509_STORE_CTX_get0_store")
-have_func("SSL_CTX_set_alpn_select_cb")
+have_func("EC_curve_nist2nid", "openssl/ssl.h")
+have_func("X509_REVOKED_dup", "openssl/ssl.h")
+have_func("X509_STORE_CTX_get0_store", "openssl/ssl.h")
+have_func("SSL_CTX_set_alpn_select_cb", "openssl/ssl.h")
 OpenSSL.check_func_or_macro("SSL_CTX_set1_curves_list", "openssl/ssl.h")
 OpenSSL.check_func_or_macro("SSL_CTX_set_ecdh_auto", "openssl/ssl.h")
 OpenSSL.check_func_or_macro("SSL_get_server_tmp_key", "openssl/ssl.h")
-have_func("SSL_is_server")
+have_func("SSL_is_server", "openssl/ssl.h")
 
 # added in 1.1.0
 if !have_struct_member("SSL", "ctx", "openssl/ssl.h") ||
     try_static_assert("LIBRESSL_VERSION_NUMBER >= 0x2070000fL", "openssl/opensslv.h")
   $defs.push("-DHAVE_OPAQUE_OPENSSL")
 end
-have_func("CRYPTO_lock") || $defs.push("-DHAVE_OPENSSL_110_THREADING_API")
-have_func("BN_GENCB_new")
-have_func("BN_GENCB_free")
-have_func("BN_GENCB_get_arg")
-have_func("EVP_MD_CTX_new")
-have_func("EVP_MD_CTX_free")
-have_func("HMAC_CTX_new")
-have_func("HMAC_CTX_free")
+have_func("CRYPTO_lock", "openssl/ssl.h") || $defs.push("-DHAVE_OPENSSL_110_THREADING_API")
+have_func("BN_GENCB_new", "openssl/ssl.h")
+have_func("BN_GENCB_free", "openssl/ssl.h")
+have_func("BN_GENCB_get_arg", "openssl/ssl.h")
+have_func("EVP_MD_CTX_new", "openssl/ssl.h")
+have_func("EVP_MD_CTX_free", "openssl/ssl.h")
+have_func("HMAC_CTX_new", "openssl/ssl.h")
+have_func("HMAC_CTX_free", "openssl/ssl.h")
 OpenSSL.check_func("RAND_pseudo_bytes", "openssl/rand.h") # deprecated
-have_func("X509_STORE_get_ex_data")
-have_func("X509_STORE_set_ex_data")
-have_func("X509_STORE_get_ex_new_index")
-have_func("X509_CRL_get0_signature")
-have_func("X509_REQ_get0_signature")
-have_func("X509_REVOKED_get0_serialNumber")
-have_func("X509_REVOKED_get0_revocationDate")
-have_func("X509_get0_tbs_sigalg")
-have_func("X509_STORE_CTX_get0_untrusted")
-have_func("X509_STORE_CTX_get0_cert")
-have_func("X509_STORE_CTX_get0_chain")
-have_func("OCSP_SINGLERESP_get0_id")
-have_func("SSL_CTX_get_ciphers")
-have_func("X509_up_ref")
-have_func("X509_CRL_up_ref")
-have_func("X509_STORE_up_ref")
-have_func("SSL_SESSION_up_ref")
-have_func("EVP_PKEY_up_ref")
+have_func("X509_STORE_get_ex_data", "openssl/ssl.h")
+have_func("X509_STORE_set_ex_data", "openssl/ssl.h")
+have_func("X509_STORE_get_ex_new_index", "openssl/ssl.h")
+have_func("X509_CRL_get0_signature", "openssl/ssl.h")
+have_func("X509_REQ_get0_signature", "openssl/ssl.h")
+have_func("X509_REVOKED_get0_serialNumber", "openssl/ssl.h")
+have_func("X509_REVOKED_get0_revocationDate", "openssl/ssl.h")
+have_func("X509_get0_tbs_sigalg", "openssl/ssl.h")
+have_func("X509_STORE_CTX_get0_untrusted", "openssl/ssl.h")
+have_func("X509_STORE_CTX_get0_cert", "openssl/ssl.h")
+have_func("X509_STORE_CTX_get0_chain", "openssl/ssl.h")
+have_func("OCSP_SINGLERESP_get0_id", "openssl/ssl.h")
+have_func("SSL_CTX_get_ciphers", "openssl/ssl.h")
+have_func("X509_up_ref", "openssl/ssl.h")
+have_func("X509_CRL_up_ref", "openssl/ssl.h")
+have_func("X509_STORE_up_ref", "openssl/ssl.h")
+have_func("SSL_SESSION_up_ref", "openssl/ssl.h")
+have_func("EVP_PKEY_up_ref", "openssl/ssl.h")
 
 # added after 1.1.1
-have_func("DTLSv1_accept")
+have_func("DTLSv1_accept", "openssl/ssl.h")
 
 OpenSSL.check_func_or_macro("SSL_CTX_set_tmp_ecdh_callback", "openssl/ssl.h") # removed
 OpenSSL.check_func_or_macro("SSL_CTX_set_min_proto_version", "openssl/ssl.h")
-have_func("SSL_CTX_get_security_level")
-have_func("X509_get0_notBefore")
-have_func("SSL_SESSION_get_protocol_version")
-have_func("TS_STATUS_INFO_get0_status")
-have_func("TS_STATUS_INFO_get0_text")
-have_func("TS_STATUS_INFO_get0_failure_info")
-have_func("TS_VERIFY_CTS_set_certs")
-have_func("TS_VERIFY_CTX_set_store")
-have_func("TS_VERIFY_CTX_add_flags")
-have_func("TS_RESP_CTX_set_time_cb")
-have_func("EVP_PBE_scrypt")
-have_func("SSL_CTX_set_post_handshake_auth")
-have_func("CMS_sign")
+have_func("SSL_CTX_get_security_level", "openssl/ssl.h")
+have_func("X509_get0_notBefore", "openssl/ssl.h")
+have_func("SSL_SESSION_get_protocol_version", "openssl/ssl.h")
+have_func("TS_STATUS_INFO_get0_status", "openssl/ssl.h")
+have_func("TS_STATUS_INFO_get0_text", "openssl/ssl.h")
+have_func("TS_STATUS_INFO_get0_failure_info", "openssl/ssl.h")
+have_func("TS_VERIFY_CTS_set_certs", "openssl/ssl.h")
+have_func("TS_VERIFY_CTX_set_store", "openssl/ssl.h")
+have_func("TS_VERIFY_CTX_add_flags", "openssl/ssl.h")
+have_func("TS_RESP_CTX_set_time_cb", "openssl/ssl.h")
+have_func("EVP_PBE_scrypt", "openssl/ssl.h")
+have_func("SSL_CTX_set_post_handshake_auth", "openssl/ssl.h")
+have_func("CMS_sign", "openssl/ssl.h")
 
 Logging::message "=== Checking done. ===\n"
-
-$LOCAL_LIBS="/sandel/3rd/openssl-dtls-api/lib/libssl.a /sandel/3rd/openssl-dtls-api/lib/libcrypto.a"
 
 create_header
 create_makefile("openssl")
