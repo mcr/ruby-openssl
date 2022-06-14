@@ -1923,7 +1923,6 @@ ossl_ssl_read_internal(int argc, VALUE *argv, VALUE self, int nonblock)
 	return str;
 
     GetSSL(self, ssl);
-    fprintf(stderr, "object %p returns ssl: %p\n", self, ssl);
     io = rb_attr_get(self, id_i_io);
     GetOpenFile(io, fptr);
     if (ssl_started(ssl)) {
