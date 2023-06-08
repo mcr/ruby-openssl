@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewX509CRL(klass) \
     TypedData_Wrap_Struct((klass), &ossl_x509crl_type, 0)
 #define SetX509CRL(obj, crl) do { \
@@ -161,6 +162,7 @@ ossl_x509crl_set_version(VALUE self, VALUE version)
     return version;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_x509crl_get_signature_algorithm(VALUE self)
 {
@@ -180,6 +182,7 @@ ossl_x509crl_get_signature_algorithm(VALUE self)
 
     return ossl_membio2str(out);
 }
+#endif
 
 static VALUE
 ossl_x509crl_get_issuer(VALUE self)
@@ -291,6 +294,7 @@ ossl_x509crl_get_revoked(VALUE self)
     return ary;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_x509crl_set_revoked(VALUE self, VALUE ary)
 {
@@ -337,6 +341,7 @@ ossl_x509crl_add_revoked(VALUE self, VALUE revoked)
 
     return revoked;
 }
+#endif
 
 static VALUE
 ossl_x509crl_sign(VALUE self, VALUE key, VALUE digest)
@@ -517,16 +522,20 @@ Init_ossl_x509crl(void)
 
     rb_define_method(cX509CRL, "version", ossl_x509crl_get_version, 0);
     rb_define_method(cX509CRL, "version=", ossl_x509crl_set_version, 1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509CRL, "signature_algorithm", ossl_x509crl_get_signature_algorithm, 0);
+#endif
     rb_define_method(cX509CRL, "issuer", ossl_x509crl_get_issuer, 0);
     rb_define_method(cX509CRL, "issuer=", ossl_x509crl_set_issuer, 1);
     rb_define_method(cX509CRL, "last_update", ossl_x509crl_get_last_update, 0);
     rb_define_method(cX509CRL, "last_update=", ossl_x509crl_set_last_update, 1);
     rb_define_method(cX509CRL, "next_update", ossl_x509crl_get_next_update, 0);
     rb_define_method(cX509CRL, "next_update=", ossl_x509crl_set_next_update, 1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509CRL, "revoked", ossl_x509crl_get_revoked, 0);
     rb_define_method(cX509CRL, "revoked=", ossl_x509crl_set_revoked, 1);
     rb_define_method(cX509CRL, "add_revoked", ossl_x509crl_add_revoked, 1);
+#endif
     rb_define_method(cX509CRL, "sign", ossl_x509crl_sign, 2);
     rb_define_method(cX509CRL, "verify", ossl_x509crl_verify, 1);
     rb_define_method(cX509CRL, "to_der", ossl_x509crl_to_der, 0);
@@ -537,3 +546,4 @@ Init_ossl_x509crl(void)
     rb_define_method(cX509CRL, "extensions=", ossl_x509crl_set_extensions, 1);
     rb_define_method(cX509CRL, "add_extension", ossl_x509crl_add_extension, 1);
 }
+#endif

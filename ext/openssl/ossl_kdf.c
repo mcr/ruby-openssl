@@ -4,6 +4,8 @@
  */
 #include "ossl.h"
 
+/* because: EVP_PBE_scrypt */
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE mKDF, eKDF;
 
 /*
@@ -219,3 +221,4 @@ Init_ossl_kdf(void)
     rb_define_module_function(mKDF, "scrypt", kdf_scrypt, -1);
 #endif
 }
+#endif

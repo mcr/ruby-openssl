@@ -27,7 +27,9 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl/conf.h>
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #include <openssl/conf_api.h>
+#endif
 #include <openssl/crypto.h>
 #if !defined(OPENSSL_NO_ENGINE)
 #  include <openssl/engine.h>

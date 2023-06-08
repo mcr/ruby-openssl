@@ -9,7 +9,8 @@
  */
 #include "ossl.h"
 
-
+/* because: NCONF_load_bio */
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * Classes
  */
@@ -87,3 +88,4 @@ Init_ossl_config(void)
     OPENSSL_free(default_config_file);
     /* methods are defined by openssl/config.rb */
 }
+#endif

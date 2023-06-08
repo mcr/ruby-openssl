@@ -17,6 +17,7 @@ VALUE cPKey;
 VALUE ePKeyError;
 static ID id_private_q;
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * callback for generating keys
  */
@@ -52,6 +53,7 @@ ossl_generate_cb_stop(void *ptr)
     struct ossl_generate_cb_arg *arg = (struct ossl_generate_cb_arg *)ptr;
     arg->stop = 1;
 }
+#endif
 
 static void
 ossl_evp_pkey_free(void *ptr)
@@ -80,19 +82,19 @@ pkey_new0(EVP_PKEY *pkey)
 	ossl_raise(rb_eRuntimeError, "pkey is empty");
 
     switch (type) {
-#if !defined(OPENSSL_NO_RSA)
+#if !defined(OPENSSL_NO_RSA) && !defined(WOLFSSL_TYPES_DEFINED)
     case EVP_PKEY_RSA:
 	return ossl_rsa_new(pkey);
 #endif
-#if !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_DSA) && !defined(WOLFSSL_TYPES_DEFINED)
     case EVP_PKEY_DSA:
 	return ossl_dsa_new(pkey);
 #endif
-#if !defined(OPENSSL_NO_DH)
+#if !defined(OPENSSL_NO_DH) && !defined(WOLFSSL_TYPES_DEFINED)
     case EVP_PKEY_DH:
 	return ossl_dh_new(pkey);
 #endif
-#if !defined(OPENSSL_NO_EC)
+#if !defined(OPENSSL_NO_EC) && !defined(WOLFSSL_TYPES_DEFINED)
     case EVP_PKEY_EC:
 	return ossl_ec_new(pkey);
 #endif
@@ -172,6 +174,7 @@ pkey_check_public_key(EVP_PKEY *pkey)
     if (EVP_PKEY_missing_parameters(pkey))
 	ossl_raise(ePKeyError, "parameters missing");
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
     ptr = EVP_PKEY_get0(pkey);
     switch (EVP_PKEY_base_id(pkey)) {
       case EVP_PKEY_RSA:
@@ -200,6 +203,7 @@ pkey_check_public_key(EVP_PKEY *pkey)
 	return;
     }
     ossl_raise(ePKeyError, "public key missing");
+#endif
 }
 
 EVP_PKEY *
@@ -361,7 +365,11 @@ ossl_pkey_verify(VALUE self, VALUE digest, VALUE sig, VALUE data)
     ctx = EVP_MD_CTX_new();
     if (!ctx)
 	ossl_raise(ePKeyError, "EVP_MD_CTX_new");
+#if defined(WOLFSSL_TYPES_DEFINED)
+    if (!EVP_VerifyInit(ctx, md)) {
+#else
     if (!EVP_VerifyInit_ex(ctx, md, NULL)) {
+#endif
 	EVP_MD_CTX_free(ctx);
 	ossl_raise(ePKeyError, "EVP_VerifyInit_ex");
     }

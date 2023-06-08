@@ -413,6 +413,7 @@ ossl_x509name_hash(VALUE self)
     return ULONG2NUM(hash);
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    name.hash_old => integer
@@ -431,6 +432,7 @@ ossl_x509name_hash_old(VALUE self)
 
     return ULONG2NUM(hash);
 }
+#endif
 
 /*
  * call-seq:
@@ -499,7 +501,9 @@ Init_ossl_x509name(void)
     rb_define_alias(cX509Name, "<=>", "cmp");
     rb_define_method(cX509Name, "eql?", ossl_x509name_eql, 1);
     rb_define_method(cX509Name, "hash", ossl_x509name_hash, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509Name, "hash_old", ossl_x509name_hash_old, 0);
+#endif
     rb_define_method(cX509Name, "to_der", ossl_x509name_to_der, 0);
 
     utf8str = INT2NUM(V_ASN1_UTF8STRING);

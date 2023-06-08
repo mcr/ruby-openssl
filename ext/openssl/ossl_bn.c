@@ -10,6 +10,13 @@
 /* modified by Michal Rokos <m.rokos@sh.cvut.cz> */
 #include "ossl.h"
 
+/* Document-class: OpenSSL::BNError
+ *
+ * Generic Error for all of OpenSSL::BN (big num)
+ */
+VALUE eBNError;
+
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewBN(klass) \
   TypedData_Wrap_Struct((klass), &ossl_bn_type, 0)
 #define SetBN(obj, bn) do { \
@@ -44,12 +51,6 @@ static const rb_data_type_t ossl_bn_type = {
  * Classes
  */
 VALUE cBN;
-
-/* Document-class: OpenSSL::BNError
- *
- * Generic Error for all of OpenSSL::BN (big num)
- */
-VALUE eBNError;
 
 /*
  * Public
@@ -1200,3 +1201,4 @@ Init_ossl_bn(void)
     /* RECiProcal
      * MONTgomery */
 }
+#endif

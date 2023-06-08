@@ -91,6 +91,7 @@ ossl_rsa_new(EVP_PKEY *pkey)
     return obj;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * Private
  */
@@ -196,6 +197,7 @@ ossl_rsa_s_generate(int argc, VALUE *argv, VALUE klass)
 
     return obj;
 }
+#endif
 
 /*
  * call-seq:
@@ -230,7 +232,9 @@ ossl_rsa_initialize(int argc, VALUE *argv, VALUE self)
 	rsa = RSA_new();
     }
     else if (RB_INTEGER_TYPE_P(arg)) {
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	rsa = rsa_generate(NUM2INT(arg), NIL_P(pass) ? RSA_F4 : NUM2ULONG(pass));
+#endif
 	if (!rsa) ossl_raise(eRSAError, NULL);
     }
     else {
@@ -246,18 +250,22 @@ ossl_rsa_initialize(int argc, VALUE *argv, VALUE self)
 	    OSSL_BIO_reset(in);
 	    rsa = d2i_RSAPrivateKey_bio(in, NULL);
 	}
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	if (!rsa) {
 	    OSSL_BIO_reset(in);
 	    rsa = d2i_RSA_PUBKEY_bio(in, NULL);
 	}
+#endif
 	if (!rsa) {
 	    OSSL_BIO_reset(in);
 	    rsa = PEM_read_bio_RSAPublicKey(in, NULL, NULL, NULL);
 	}
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	if (!rsa) {
 	    OSSL_BIO_reset(in);
 	    rsa = d2i_RSAPublicKey_bio(in, NULL);
 	}
+#endif
 	BIO_free(in);
 	if (!rsa) {
 	    ossl_raise(eRSAError, "Neither PUB key nor PRIV key");
@@ -271,6 +279,7 @@ ossl_rsa_initialize(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_rsa_initialize_copy(VALUE self, VALUE other)
 {
@@ -290,6 +299,7 @@ ossl_rsa_initialize_copy(VALUE self, VALUE other)
 
     return self;
 }
+#endif
 
 /*
  * call-seq:
@@ -327,6 +337,7 @@ ossl_rsa_is_private(VALUE self)
     return RSA_PRIVATE(self, rsa) ? Qtrue : Qfalse;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *   rsa.export([cipher, pass_phrase]) => PEM-format String
@@ -403,6 +414,7 @@ ossl_rsa_to_der(VALUE self)
 
     return str;
 }
+#endif
 
 /*
  * call-seq:
@@ -536,6 +548,7 @@ ossl_rsa_private_decrypt(int argc, VALUE *argv, VALUE self)
     return str;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *   rsa.params => hash
@@ -571,6 +584,7 @@ ossl_rsa_get_params(VALUE self)
 
     return hash;
 }
+#endif
 
 /*
  * call-seq:
@@ -654,6 +668,8 @@ ossl_rsa_blinding_off(VALUE self)
 }
  */
 
+/* uses ossl_bn_new() */
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * Document-method: OpenSSL::PKey::RSA#set_key
  * call-seq:
@@ -670,6 +686,7 @@ OSSL_PKEY_BN_DEF3(rsa, RSA, key, n, e, d)
  * Sets _p_, _q_ for the RSA instance.
  */
 OSSL_PKEY_BN_DEF2(rsa, RSA, factors, p, q)
+
 /*
  * Document-method: OpenSSL::PKey::RSA#set_crt_params
  * call-seq:
@@ -680,6 +697,7 @@ OSSL_PKEY_BN_DEF2(rsa, RSA, factors, p, q)
  * respectively.
  */
 OSSL_PKEY_BN_DEF3(rsa, RSA, crt_params, dmp1, dmq1, iqmp)
+#endif
 
 /*
  * INIT
@@ -715,23 +733,32 @@ Init_ossl_rsa(void)
      */
     cRSA = rb_define_class_under(mPKey, "RSA", cPKey);
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_singleton_method(cRSA, "generate", ossl_rsa_s_generate, -1);
+#endif
     rb_define_method(cRSA, "initialize", ossl_rsa_initialize, -1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cRSA, "initialize_copy", ossl_rsa_initialize_copy, 1);
+#endif
 
     rb_define_method(cRSA, "public?", ossl_rsa_is_public, 0);
     rb_define_method(cRSA, "private?", ossl_rsa_is_private, 0);
     rb_define_method(cRSA, "to_text", ossl_rsa_to_text, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cRSA, "export", ossl_rsa_export, -1);
     rb_define_alias(cRSA, "to_pem", "export");
     rb_define_alias(cRSA, "to_s", "export");
+#endif
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cRSA, "to_der", ossl_rsa_to_der, 0);
+#endif
     rb_define_method(cRSA, "public_key", ossl_rsa_to_public_key, 0);
     rb_define_method(cRSA, "public_encrypt", ossl_rsa_public_encrypt, -1);
     rb_define_method(cRSA, "public_decrypt", ossl_rsa_public_decrypt, -1);
     rb_define_method(cRSA, "private_encrypt", ossl_rsa_private_encrypt, -1);
     rb_define_method(cRSA, "private_decrypt", ossl_rsa_private_decrypt, -1);
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
     DEF_OSSL_PKEY_BN(cRSA, rsa, n);
     DEF_OSSL_PKEY_BN(cRSA, rsa, e);
     DEF_OSSL_PKEY_BN(cRSA, rsa, d);
@@ -750,6 +777,7 @@ Init_ossl_rsa(void)
     DefRSAConst(SSLV23_PADDING);
     DefRSAConst(NO_PADDING);
     DefRSAConst(PKCS1_OAEP_PADDING);
+#endif
 
 /*
  * TODO: Test it

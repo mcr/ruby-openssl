@@ -10,7 +10,7 @@
  */
 #include "ossl.h"
 
-#if !defined(OPENSSL_NO_OCSP)
+#if !defined(OPENSSL_NO_OCSP) && !defined(WOLFSSL_TYPES_DEFINED)
 
 #define NewOCSPReq(klass) \
     TypedData_Wrap_Struct((klass), &ossl_ocsp_request_type, 0)

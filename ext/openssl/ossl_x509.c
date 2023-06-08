@@ -35,15 +35,20 @@ Init_ossl_x509(void)
 
     mX509 = rb_define_module_under(mOSSL, "X509");
 
-    Init_ossl_x509attr();
     Init_ossl_x509cert();
+#if !defined(WOLFSSL_TYPES_DEFINED)
+    Init_ossl_x509attr();
     Init_ossl_x509crl();
     Init_ossl_x509ext();
+#endif
     Init_ossl_x509name();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_x509req();
     Init_ossl_x509revoked();
     Init_ossl_x509store();
+#endif
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
     DefX509Const(V_OK);
     DefX509Const(V_ERR_UNABLE_TO_GET_ISSUER_CERT);
     DefX509Const(V_ERR_UNABLE_TO_GET_CRL);
@@ -161,11 +166,14 @@ Init_ossl_x509(void)
     DefX509Const(TRUST_OCSP_SIGN);
     DefX509Const(TRUST_OCSP_REQUEST);
     DefX509Const(TRUST_TSA);
+#endif
 
-    DefX509Default(CERT_AREA, cert_area);
     DefX509Default(CERT_DIR, cert_dir);
     DefX509Default(CERT_FILE, cert_file);
     DefX509Default(CERT_DIR_ENV, cert_dir_env);
     DefX509Default(CERT_FILE_ENV, cert_file_env);
+#if !defined(WOLFSSL_TYPES_DEFINED)
+    DefX509Default(CERT_AREA, cert_area);
     DefX509Default(PRIVATE_DIR, private_dir);
+#endif
 }

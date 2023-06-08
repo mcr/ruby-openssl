@@ -88,8 +88,10 @@ ossl_##name##_sk2ary(const STACK_OF(type) *sk)	\
     return ary;					\
 }
 OSSL_IMPL_SK2ARY(x509, X509)
+#if !defined(WOLFSSL_TYPES_DEFINED)
 OSSL_IMPL_SK2ARY(x509crl, X509_CRL)
 OSSL_IMPL_SK2ARY(x509name, X509_NAME)
+#endif
 
 static VALUE
 ossl_str_new_i(VALUE size)
@@ -1186,22 +1188,30 @@ Init_openssl(void)
     /*
      * Init components
      */
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_bn();
     Init_ossl_cipher();
     Init_ossl_config();
-    Init_ossl_digest();
+#endif
     Init_ossl_hmac();
+#if !defined(WOLFSSL_TYPES_DEFINED)
+    Init_ossl_digest();
     Init_ossl_ns_spki();
     Init_ossl_pkcs12();
     Init_ossl_pkcs7();
     Init_ossl_pkey();
+#endif
     Init_ossl_rand();
     Init_ossl_ssl();
     Init_ossl_x509();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_ocsp();
+#endif
     Init_ossl_engine();
     Init_ossl_asn1();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_kdf();
+#endif
 
 #if defined(OSSL_DEBUG)
     /*

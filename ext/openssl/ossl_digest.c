@@ -51,24 +51,29 @@ ossl_evp_get_digestbyname(VALUE obj)
     	const char *name = StringValueCStr(obj);
 
 	md = EVP_get_digestbyname(name);
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	if (!md) {
 	    oid = OBJ_txt2obj(name, 0);
 	    md = EVP_get_digestbyobj(oid);
 	    ASN1_OBJECT_free(oid);
 	}
+#endif
 	if(!md)
             ossl_raise(rb_eRuntimeError, "Unsupported digest algorithm (%"PRIsVALUE").", obj);
-    } else {
+    }
+#if !defined(WOLFSSL_TYPES_DEFINED)
+    else {
         EVP_MD_CTX *ctx;
 
         GetDigest(obj, ctx);
 
         md = EVP_MD_CTX_md(ctx);
     }
-
+#endif
     return md;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 VALUE
 ossl_digest_new(const EVP_MD *md)
 {
@@ -454,3 +459,4 @@ Init_ossl_digest(void)
 
     rb_define_method(cDigest, "name", ossl_digest_name, 0);
 }
+#endif
