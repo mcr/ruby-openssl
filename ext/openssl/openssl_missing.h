@@ -77,12 +77,12 @@ void ossl_HMAC_CTX_free(HMAC_CTX *);
 				(newf), (dupf), (freef))
 #endif
 
-#if !defined(HAVE_X509_CRL_GET0_SIGNATURE)
+#if !defined(HAVE_X509_CRL_GET0_SIGNATURE) && !defined(WOLFSSL_TYPES_DEFINED)
 void ossl_X509_CRL_get0_signature(const X509_CRL *, const ASN1_BIT_STRING **, const X509_ALGOR **);
 #  define X509_CRL_get0_signature ossl_X509_CRL_get0_signature
 #endif
 
-#if !defined(HAVE_X509_REQ_GET0_SIGNATURE)
+#if !defined(HAVE_X509_REQ_GET0_SIGNATURE) && !defined(WOLFSSL_TYPES_DEFINED)
 void ossl_X509_REQ_get0_signature(const X509_REQ *, const ASN1_BIT_STRING **, const X509_ALGOR **);
 #  define X509_REQ_get0_signature ossl_X509_REQ_get0_signature
 #endif
@@ -115,7 +115,7 @@ void ossl_X509_REQ_get0_signature(const X509_REQ *, const ASN1_BIT_STRING **, co
 #  define OCSP_SINGLERESP_get0_id(s) ((s)->certId)
 #endif
 
-#if !defined(HAVE_SSL_CTX_GET_CIPHERS)
+#if !defined(HAVE_SSL_CTX_GET_CIPHERS) && !defined(WOLFSSL_TYPES_DEFINED)
 #  define SSL_CTX_get_ciphers(ctx) ((ctx)->cipher_list)
 #endif
 
@@ -211,7 +211,7 @@ IMPL_PKEY_GETTER(EC_KEY, ec)
 #  define X509_CRL_get0_nextUpdate(x) X509_CRL_get_nextUpdate(x)
 #endif
 
-#if !defined(HAVE_SSL_SESSION_GET_PROTOCOL_VERSION)
+#if !defined(HAVE_SSL_SESSION_GET_PROTOCOL_VERSION) && !defined(WOLFSSL_TYPES_DEFINED)
 #  define SSL_SESSION_get_protocol_version(s) ((s)->ssl_version)
 #endif
 

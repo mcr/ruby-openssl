@@ -81,7 +81,7 @@ ossl_HMAC_CTX_free(HMAC_CTX *ctx)
 }
 #endif
 
-#if !defined(HAVE_X509_CRL_GET0_SIGNATURE)
+#if !defined(HAVE_X509_CRL_GET0_SIGNATURE) && !defined(WOLFSSL_TYPES_DEFINED)
 void
 ossl_X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
 			     const X509_ALGOR **palg)
@@ -93,7 +93,7 @@ ossl_X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
 }
 #endif
 
-#if !defined(HAVE_X509_REQ_GET0_SIGNATURE)
+#if !defined(HAVE_X509_REQ_GET0_SIGNATURE) && !defined(WOLFSSL_TYPES_DEFINED)
 void
 ossl_X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
 			     const X509_ALGOR **palg)

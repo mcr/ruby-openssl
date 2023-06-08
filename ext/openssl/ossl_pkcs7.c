@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewPKCS7(klass) \
     TypedData_Wrap_Struct((klass), &ossl_pkcs7_type, 0)
 #define SetPKCS7(obj, pkcs7) do { \
@@ -1111,3 +1112,4 @@ Init_ossl_pkcs7(void)
     DefPKCS7Const(NOATTR);
     DefPKCS7Const(NOSMIMECAP);
 }
+#endif

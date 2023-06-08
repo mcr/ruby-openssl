@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewX509Store(klass) \
     TypedData_Wrap_Struct((klass), &ossl_x509store_type, 0)
 #define SetX509Store(obj, st) do { \
@@ -882,3 +883,4 @@ Init_ossl_x509store(void)
     rb_define_method(cX509StoreContext, "trust=", ossl_x509stctx_set_trust, 1);
     rb_define_method(cX509StoreContext, "time=", ossl_x509stctx_set_time, 1);
 }
+#endif

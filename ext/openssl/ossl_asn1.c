@@ -9,6 +9,8 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
+
 static VALUE ossl_asn1_decode0(unsigned char **pp, long length, long *offset,
 			       int depth, int yield, long *num_read);
 static VALUE ossl_asn1_initialize(int argc, VALUE *argv, VALUE self);
@@ -1850,3 +1852,5 @@ do{\
 
     id_each = rb_intern_const("each");
 }
+
+#endif

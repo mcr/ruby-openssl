@@ -73,6 +73,7 @@ static VALUE ossl_ssl_session_initialize(VALUE self, VALUE arg1)
 	return self;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_ssl_session_initialize_copy(VALUE self, VALUE other)
 {
@@ -127,6 +128,7 @@ static VALUE ossl_ssl_session_eq(VALUE val1, VALUE val2)
 	default:	return Qfalse;
 	}
 }
+#endif
 
 /*
  * call-seq:
@@ -168,6 +170,7 @@ ossl_ssl_session_get_timeout(VALUE self)
     return LONG2NUM(t);
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    session.time = time
@@ -189,6 +192,7 @@ static VALUE ossl_ssl_session_set_time(VALUE self, VALUE time_v)
 	SSL_SESSION_set_time(ctx, t);
 	return ossl_ssl_session_get_time(self);
 }
+#endif
 
 /*
  * call-seq:
@@ -252,6 +256,7 @@ static VALUE ossl_ssl_session_to_der(VALUE self)
 	return str;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    session.to_pem -> String
@@ -277,7 +282,7 @@ static VALUE ossl_ssl_session_to_pem(VALUE self)
 
 	return ossl_membio2str(out);
 }
-
+#endif
 
 /*
  * call-seq:
@@ -317,16 +322,22 @@ void Init_ossl_ssl_session(void)
 
 	rb_define_alloc_func(cSSLSession, ossl_ssl_session_alloc);
 	rb_define_method(cSSLSession, "initialize", ossl_ssl_session_initialize, 1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	rb_define_method(cSSLSession, "initialize_copy", ossl_ssl_session_initialize_copy, 1);
 
 	rb_define_method(cSSLSession, "==", ossl_ssl_session_eq, 1);
+#endif
 
 	rb_define_method(cSSLSession, "time", ossl_ssl_session_get_time, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	rb_define_method(cSSLSession, "time=", ossl_ssl_session_set_time, 1);
+#endif
 	rb_define_method(cSSLSession, "timeout", ossl_ssl_session_get_timeout, 0);
 	rb_define_method(cSSLSession, "timeout=", ossl_ssl_session_set_timeout, 1);
 	rb_define_method(cSSLSession, "id", ossl_ssl_session_get_id, 0);
 	rb_define_method(cSSLSession, "to_der", ossl_ssl_session_to_der, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
 	rb_define_method(cSSLSession, "to_pem", ossl_ssl_session_to_pem, 0);
+#endif
 	rb_define_method(cSSLSession, "to_text", ossl_ssl_session_to_text, 0);
 }

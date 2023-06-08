@@ -9,7 +9,7 @@
  */
 #include "ossl.h"
 
-#if !defined(OPENSSL_NO_RSA)
+#if !defined(OPENSSL_NO_RSA)  && !defined(WOLFSSL_TYPES_DEFINED)
 
 #define GetPKeyRSA(obj, pkey) do { \
     GetPKey((obj), (pkey)); \

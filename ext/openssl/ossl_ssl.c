@@ -95,7 +95,7 @@ static void
 ossl_sslctx_free(void *ptr)
 {
     SSL_CTX *ctx = ptr;
-#if !defined(HAVE_X509_STORE_UP_REF)
+#if !defined(HAVE_X509_STORE_UP_REF) && !defined(WOLFSSL_TYPES_DEFINED)
     if (ctx && SSL_CTX_get_ex_data(ctx, ossl_sslctx_ex_store_p))
 	ctx->cert_store = NULL;
 #endif
@@ -144,6 +144,7 @@ ossl_sslctx_s_alloc(VALUE klass)
     return obj;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    ctx.ssl_version = :TLSv1
@@ -188,6 +189,7 @@ ossl_sslctx_set_ssl_version(VALUE self, VALUE ssl_method)
 
     ossl_raise(rb_eArgError, "unknown SSL method `%"PRIsVALUE"'.", m);
 }
+#endif
 
 static VALUE
 ossl_call_client_cert_cb(VALUE obj)
@@ -373,7 +375,7 @@ ossl_call_session_get_cb(VALUE ary)
 
 /* this method is currently only called for servers (in OpenSSL <= 0.9.8e) */
 static SSL_SESSION *
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)) || defined(WOLFSSL_TYPES_DEFINED)
 ossl_sslctx_session_get_cb(SSL *ssl, const unsigned char *buf, int len, int *copy)
 #else
 ossl_sslctx_session_get_cb(SSL *ssl, unsigned char *buf, int len, int *copy)
@@ -582,7 +584,7 @@ ssl_renegotiation_cb(const SSL *ssl)
     (void) rb_funcall(cb, rb_intern("call"), 1, ssl_obj);
 }
 
-#if !defined(OPENSSL_NO_NEXTPROTONEG) || \
+#if (!defined(WOLFSSL_TYPES_DEFINED) && !defined(OPENSSL_NO_NEXTPROTONEG)) || \
     defined(HAVE_SSL_CTX_SET_ALPN_SELECT_CB)
 static VALUE
 ssl_npn_encode_protocol_i(VALUE cur, VALUE encoded)
@@ -708,6 +710,7 @@ ssl_alpn_select_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen,
 }
 #endif
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /* This function may serve as the entry point to support further callbacks. */
 static void
 ssl_info_cb(const SSL *ssl, int where, int val)
@@ -718,6 +721,7 @@ ssl_info_cb(const SSL *ssl, int where, int val)
 	ssl_renegotiation_cb(ssl);
     }
 }
+#endif
 
 /*
  * Gets various OpenSSL options.
@@ -961,6 +965,7 @@ ossl_ssl_cipher_to_ary(const SSL_CIPHER *cipher)
     return ary;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    ctx.ciphers => [[name, version, bits, alg_bits], ...]
@@ -989,6 +994,7 @@ ossl_sslctx_get_ciphers(VALUE self)
     }
     return ary;
 }
+#endif
 
 /*
  * call-seq:
@@ -1444,7 +1450,9 @@ ossl_ssl_initialize(int argc, VALUE *argv, VALUE self)
     RTYPEDDATA_DATA(self) = ssl;
 
     SSL_set_ex_data(ssl, ossl_ssl_ex_ptr_idx, (void *)self);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     SSL_set_info_callback(ssl, ssl_info_cb);
+#endif
     verify_cb = rb_attr_get(v_ctx, id_i_verify_callback);
     SSL_set_ex_data(ssl, ossl_ssl_ex_vcb_idx, (void *)verify_cb);
 
@@ -2539,9 +2547,11 @@ Init_ossl_ssl(void)
 
     rb_define_alias(cSSLContext, "ssl_timeout", "timeout");
     rb_define_alias(cSSLContext, "ssl_timeout=", "timeout=");
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cSSLContext, "ssl_version=", ossl_sslctx_set_ssl_version, 1);
     rb_define_method(cSSLContext, "ciphers",     ossl_sslctx_get_ciphers, 0);
     rb_define_method(cSSLContext, "ciphers=",    ossl_sslctx_set_ciphers, 1);
+#endif
     rb_define_method(cSSLContext, "ecdh_curves=", ossl_sslctx_set_ecdh_curves, 1);
     rb_define_method(cSSLContext, "security_level", ossl_sslctx_get_security_level, 0);
     rb_define_method(cSSLContext, "security_level=", ossl_sslctx_set_security_level, 1);

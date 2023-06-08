@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewX509Ext(klass) \
     TypedData_Wrap_Struct((klass), &ossl_x509ext_type, 0)
 #define SetX509Ext(obj, ext) do { \
@@ -476,3 +477,4 @@ Init_ossl_x509ext(void)
     rb_define_method(cX509Ext, "critical?", ossl_x509ext_get_critical, 0);
     rb_define_method(cX509Ext, "to_der", ossl_x509ext_to_der, 0);
 }
+#endif

@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewCipher(klass) \
     TypedData_Wrap_Struct((klass), &ossl_cipher_type, 0)
 #define AllocCipher(obj, ctx) do { \
@@ -1060,3 +1061,4 @@ Init_ossl_cipher(void)
     id_auth_tag_len = rb_intern_const("auth_tag_len");
     id_key_set = rb_intern_const("key_set");
 }
+#endif

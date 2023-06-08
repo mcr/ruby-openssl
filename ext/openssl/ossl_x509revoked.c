@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewX509Rev(klass) \
     TypedData_Wrap_Struct((klass), &ossl_x509rev_type, 0)
 #define SetX509Rev(obj, rev) do { \
@@ -277,3 +278,4 @@ Init_ossl_x509revoked(void)
     rb_define_method(cX509Rev, "extensions=", ossl_x509revoked_set_extensions, 1);
     rb_define_method(cX509Rev, "add_extension", ossl_x509revoked_add_extension, 1);
 }
+#endif

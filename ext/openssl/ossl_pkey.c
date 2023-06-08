@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * Classes
  */
@@ -481,3 +482,4 @@ Init_ossl_pkey(void)
     Init_ossl_dh();
     Init_ossl_ec();
 }
+#endif

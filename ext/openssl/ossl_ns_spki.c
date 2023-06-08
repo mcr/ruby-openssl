@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewSPKI(klass) \
     TypedData_Wrap_Struct((klass), &ossl_netscape_spki_type, 0)
 #define SetSPKI(obj, spki) do { \
@@ -399,3 +400,4 @@ Init_ossl_ns_spki(void)
     rb_define_method(cSPKI, "challenge", ossl_spki_get_challenge, 0);
     rb_define_method(cSPKI, "challenge=", ossl_spki_set_challenge, 1);
 }
+#endif

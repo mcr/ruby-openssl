@@ -4,6 +4,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define NewPKCS12(klass) \
     TypedData_Wrap_Struct((klass), &ossl_pkcs12_type, 0)
 
@@ -254,3 +255,4 @@ Init_ossl_pkcs12(void)
     rb_define_method(cPKCS12, "initialize", ossl_pkcs12_initialize, -1);
     rb_define_method(cPKCS12, "to_der", ossl_pkcs12_to_der, 0);
 }
+#endif

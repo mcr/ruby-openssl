@@ -1187,20 +1187,28 @@ Init_openssl(void)
      * Init components
      */
     Init_ossl_bn();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_cipher();
+#endif
     Init_ossl_config();
     Init_ossl_digest();
     Init_ossl_hmac();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_ns_spki();
     Init_ossl_pkcs12();
     Init_ossl_pkcs7();
     Init_ossl_pkey();
+#endif
     Init_ossl_rand();
     Init_ossl_ssl();
     Init_ossl_x509();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_ocsp();
+#endif
     Init_ossl_engine();
+#if !defined(WOLFSSL_TYPES_DEFINED)
     Init_ossl_asn1();
+#endif
     Init_ossl_kdf();
 
 #if defined(OSSL_DEBUG)

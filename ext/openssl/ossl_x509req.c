@@ -251,6 +251,7 @@ ossl_x509req_set_subject(VALUE self, VALUE subject)
     return subject;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_x509req_get_signature_algorithm(VALUE self)
 {
@@ -271,6 +272,7 @@ ossl_x509req_get_signature_algorithm(VALUE self)
 
     return ossl_membio2str(out);
 }
+#endif
 
 static VALUE
 ossl_x509req_get_public_key(VALUE self)
@@ -430,7 +432,9 @@ Init_ossl_x509req(void)
     rb_define_method(cX509Req, "version=", ossl_x509req_set_version, 1);
     rb_define_method(cX509Req, "subject", ossl_x509req_get_subject, 0);
     rb_define_method(cX509Req, "subject=", ossl_x509req_set_subject, 1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509Req, "signature_algorithm", ossl_x509req_get_signature_algorithm, 0);
+#endif
     rb_define_method(cX509Req, "public_key", ossl_x509req_get_public_key, 0);
     rb_define_method(cX509Req, "public_key=", ossl_x509req_set_public_key, 1);
     rb_define_method(cX509Req, "sign", ossl_x509req_sign, 2);
