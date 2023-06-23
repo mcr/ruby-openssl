@@ -100,9 +100,11 @@ YoaOffgTf5qxiwkjnlVZQc3whgnEt9FpVMvQ9eknyeGB5KHfayAc3+hUAvI3/Cr3
         )
       end
 
-      DEFAULT_CERT_STORE = OpenSSL::X509::Store.new # :nodoc:
-      DEFAULT_CERT_STORE.set_default_paths
-      DEFAULT_CERT_STORE.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
+      if defined?(OpenSSL::X509::Store)
+        DEFAULT_CERT_STORE = OpenSSL::X509::Store.new # :nodoc:
+        DEFAULT_CERT_STORE.set_default_paths
+        DEFAULT_CERT_STORE.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
+      end
 
       # A callback invoked when DH parameters are required.
       #
