@@ -301,6 +301,7 @@ ossl_x509_get_serial(VALUE self)
     return asn1integer_to_num(X509_get_serialNumber(x509));
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    cert.serial = integer => integer
@@ -315,6 +316,7 @@ ossl_x509_set_serial(VALUE self, VALUE num)
 
     return num;
 }
+#endif
 
 /*
  * call-seq:
@@ -621,6 +623,7 @@ ossl_x509_get_extensions(VALUE self)
     return ary;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    cert.extensions = [ext...] => [ext...]
@@ -668,6 +671,7 @@ ossl_x509_add_extension(VALUE self, VALUE extension)
 
     return extension;
 }
+#endif
 
 static VALUE
 ossl_x509_inspect(VALUE self)
@@ -803,7 +807,9 @@ Init_ossl_x509cert(void)
     rb_define_method(cX509Cert, "version=", ossl_x509_set_version, 1);
     rb_define_method(cX509Cert, "signature_algorithm", ossl_x509_get_signature_algorithm, 0);
     rb_define_method(cX509Cert, "serial", ossl_x509_get_serial, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509Cert, "serial=", ossl_x509_set_serial, 1);
+#endif
     rb_define_method(cX509Cert, "subject", ossl_x509_get_subject, 0);
     rb_define_method(cX509Cert, "subject=", ossl_x509_set_subject, 1);
     rb_define_method(cX509Cert, "issuer", ossl_x509_get_issuer, 0);
@@ -817,8 +823,10 @@ Init_ossl_x509cert(void)
     rb_define_method(cX509Cert, "sign", ossl_x509_sign, 2);
     rb_define_method(cX509Cert, "verify", ossl_x509_verify, 1);
     rb_define_method(cX509Cert, "check_private_key", ossl_x509_check_private_key, 1);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509Cert, "extensions", ossl_x509_get_extensions, 0);
     rb_define_method(cX509Cert, "extensions=", ossl_x509_set_extensions, 1);
-    rb_define_method(cX509Cert, "add_extension", ossl_x509_add_extension, 1);
+    rb_define_method(cX509Cert, "add_extension", ossl_x509_add_extension, 1)
+#endif;
     rb_define_method(cX509Cert, "inspect", ossl_x509_inspect, 0);
 }

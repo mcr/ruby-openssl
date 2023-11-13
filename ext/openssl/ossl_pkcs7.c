@@ -749,6 +749,7 @@ ossl_pkcs7_get_crls(VALUE self)
     return ossl_x509crl_sk2ary(pkcs7_get_crls(self));
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 static VALUE
 ossl_pkcs7_verify(int argc, VALUE *argv, VALUE self)
 {
@@ -792,6 +793,7 @@ ossl_pkcs7_verify(int argc, VALUE *argv, VALUE self)
 
     return (ok == 1) ? Qtrue : Qfalse;
 }
+#endif
 
 static VALUE
 ossl_pkcs7_decrypt(int argc, VALUE *argv, VALUE self)
@@ -1077,7 +1079,9 @@ Init_ossl_pkcs7(void)
     rb_define_method(cPKCS7, "crls", ossl_pkcs7_get_crls, 0);
     rb_define_method(cPKCS7, "add_data", ossl_pkcs7_add_data, 1);
     rb_define_alias(cPKCS7,  "data=", "add_data");
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cPKCS7, "verify", ossl_pkcs7_verify, -1);
+#endif
     rb_define_method(cPKCS7, "decrypt", ossl_pkcs7_decrypt, -1);
     rb_define_method(cPKCS7, "to_pem", ossl_pkcs7_to_pem, 0);
     rb_define_alias(cPKCS7,  "to_s", "to_pem");

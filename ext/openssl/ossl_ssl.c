@@ -220,7 +220,11 @@ ossl_client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	return 0;
 
     *x509 = DupX509CertPtr(RARRAY_AREF(ret, 0));
+#if defined(WOLFSSL_TYPES_DEFINED)
+    *pkey = NULL;
+#else
     *pkey = DupPKeyPtr(RARRAY_AREF(ret, 1));
+#endif
 
     return 1;
 }
@@ -803,6 +807,7 @@ ossl_sslctx_setup(VALUE self)
     }
 #endif /* OPENSSL_NO_EC */
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
     val = rb_attr_get(self, id_i_cert_store);
     if (!NIL_P(val)) {
 	X509_STORE *store = GetX509StorePtr(val); /* NO NEED TO DUP */
@@ -819,6 +824,7 @@ ossl_sslctx_setup(VALUE self)
 	X509_STORE_up_ref(store);
 #endif
     }
+#endif
 
     val = rb_attr_get(self, id_i_extra_chain_cert);
     if(!NIL_P(val)){

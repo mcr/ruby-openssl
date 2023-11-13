@@ -193,6 +193,7 @@ ossl_x509attr_get_oid(VALUE self)
     return ret;
 }
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 /*
  * call-seq:
  *    attr.value = asn1 => asn1
@@ -273,6 +274,7 @@ ossl_x509attr_get_value(VALUE self)
 
     return rb_funcall(mASN1, rb_intern("decode"), 1, str);
 }
+#endif
 
 /*
  * call-seq:
@@ -318,7 +320,9 @@ Init_ossl_x509attr(void)
     rb_define_method(cX509Attr, "initialize_copy", ossl_x509attr_initialize_copy, 1);
     rb_define_method(cX509Attr, "oid=", ossl_x509attr_set_oid, 1);
     rb_define_method(cX509Attr, "oid", ossl_x509attr_get_oid, 0);
+#if !defined(WOLFSSL_TYPES_DEFINED)
     rb_define_method(cX509Attr, "value=", ossl_x509attr_set_value, 1);
     rb_define_method(cX509Attr, "value", ossl_x509attr_get_value, 0);
+#endif
     rb_define_method(cX509Attr, "to_der", ossl_x509attr_to_der, 0);
 }

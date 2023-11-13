@@ -109,7 +109,7 @@ Logging::message "=== Checking for OpenSSL features... ===\n"
 # like OPENSSL_NO_SSL2 may not be defined.
 have_func("SSLv2_method", "openssl/ssl.h")
 have_func("SSLv3_method", "openssl/ssl.h")
-have_func("RAND_egd", "openssl/ssl.h")
+#have_func("RAND_egd", "openssl/ssl.h")
 engines = %w{builtin_engines openbsd_dev_crypto dynamic 4758cca aep atalla chil
              cswift nuron sureware ubsec padlock capi gmp gost cryptodev aesni}
 engines.each { |name|

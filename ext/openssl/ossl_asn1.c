@@ -9,6 +9,10 @@
  */
 #include "ossl.h"
 
+/* needed by modules even when ASN1 is unavailable (WOLFSSL) */
+VALUE mASN1;
+VALUE eASN1Error;
+
 #if !defined(WOLFSSL_TYPES_DEFINED)
 
 static VALUE ossl_asn1_decode0(unsigned char **pp, long length, long *offset,
@@ -153,9 +157,6 @@ num_to_asn1integer(VALUE obj, ASN1_INTEGER *ai)
 #define ossl_asn1_set_tagging(o,v)         rb_ivar_set((o),sivTAGGING,(v))
 #define ossl_asn1_set_tag_class(o,v)       rb_ivar_set((o),sivTAG_CLASS,(v))
 #define ossl_asn1_set_indefinite_length(o,v) rb_ivar_set((o),sivINDEFINITE_LENGTH,(v))
-
-VALUE mASN1;
-VALUE eASN1Error;
 
 VALUE cASN1Data;
 VALUE cASN1Primitive;
@@ -1853,4 +1854,17 @@ do{\
     id_each = rb_intern_const("each");
 }
 
+#else
+void
+Init_ossl_asn1(void)
+{
+    mASN1 = rb_define_module_under(mOSSL, "ASN1");
+
+    /* Document-class: OpenSSL::ASN1::ASN1Error
+     *
+     * Generic error class for all errors raised in ASN1 and any of the
+     * classes defined in it.
+     */
+    eASN1Error = rb_define_class_under(mASN1, "ASN1Error", eOSSLError);
+}
 #endif

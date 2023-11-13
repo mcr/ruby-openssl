@@ -9,6 +9,7 @@
  */
 #include "ossl.h"
 
+#if !defined(WOLFSSL_TYPES_DEFINED)
 #define GetDigest(obj, ctx) do { \
     TypedData_Get_Struct((obj), EVP_MD_CTX, &ossl_digest_type, (ctx)); \
     if (!(ctx)) { \
@@ -454,3 +455,4 @@ Init_ossl_digest(void)
 
     rb_define_method(cDigest, "name", ossl_digest_name, 0);
 }
+#endif
