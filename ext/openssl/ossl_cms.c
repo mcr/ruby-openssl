@@ -11,6 +11,7 @@
  */
 #include "ossl.h"
 
+#if defined(HAVE_CMS_SIGN)
 /*
  * The CMS_ContentInfo is the primary data structure which this module creates and maintains
  * Is is called OpenSSL::CMS::ContentInfo in ruby.
@@ -412,12 +413,21 @@ ossl_cms_s_sign(int argc, VALUE *argv, VALUE klass)
     CMS_ContentInfo *cms_cinfo;
     VALUE ret;
 
+    x509 = NULL;
+    pkey = NULL;
+    in = NULL;
     rb_scan_args(argc, argv, "32", &cert, &key, &data, &certs, &flags);
-    x509 = GetX509CertPtr(cert); /* NO NEED TO DUP */
-    pkey = GetPrivPKeyPtr(key);  /* NO NEED TO DUP */
+    if(!NIL_P(cert)) {
+      x509 = GetX509CertPtr(cert); /* NO NEED TO DUP */
+    }
+    if(!NIL_P(key)) {
+      pkey = GetPrivPKeyPtr(key);  /* NO NEED TO DUP */
+    }
     flg = NIL_P(flags) ? 0 : NUM2INT(flags);
     ret = NewCMSContentInfo(cCMSContentInfo);
-    in  = ossl_obj2bio(&data);
+    if(!NIL_P(data)) {
+      in  = ossl_obj2bio(&data);
+    }
     if(NIL_P(certs)) x509s = NULL;
     else{
 	x509s = ossl_protect_x509_ary2sk(certs, &status);
@@ -502,6 +512,8 @@ Init_ossl_cms(void)
 
 #define DefCMSConst(x) rb_define_const(cCMS, #x, INT2NUM(CMS_##x))
 
+    DefCMSConst(NO_SIGNER_CERT_VERIFY);
+    DefCMSConst(NOINTERN);
     DefCMSConst(TEXT);
     DefCMSConst(NOCERTS);
     DefCMSConst(DETACHED);
@@ -512,3 +524,5 @@ Init_ossl_cms(void)
     DefCMSConst(STREAM);
     DefCMSConst(PARTIAL);
 }
+
+#endif /* HAVE_CMS_SIGN */
