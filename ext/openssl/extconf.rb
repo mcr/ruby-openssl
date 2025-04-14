@@ -34,6 +34,8 @@ if ssl_ldir&.split(File::PATH_SEPARATOR)&.none? { |dir| File.directory?(dir) }
     "library directories."
 end
 
+$LOCAL_LIBS="/sandel/3rd/openssl-dtls-api/lib/libssl.a /sandel/3rd/openssl-dtls-api/lib/libcrypto.a -lpthread -ldl"
+
 dir_config("kerberos")
 
 Logging::message "=== OpenSSL for Ruby configurator ===\n"
