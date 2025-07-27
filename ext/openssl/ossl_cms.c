@@ -447,6 +447,7 @@ Init_ossl_cms(void)
 
     cCMSContentInfo = rb_define_class_under(cCMS, "ContentInfo", rb_cObject);
     rb_define_alloc_func(cCMSContentInfo, ossl_cmsci_alloc);
+
     rb_define_method(cCMSContentInfo, "to_pem", ossl_cmsci_to_pem, 0);
     rb_define_alias(cCMSContentInfo,  "to_s", "to_pem");
     rb_define_method(cCMSContentInfo, "to_der", ossl_cmsci_to_der, 0);
@@ -463,6 +464,7 @@ Init_ossl_cms(void)
 #endif
 
     cCMSSignerInfo = rb_define_class_under(cCMS, "SignerInfo", rb_cObject);
+    rb_undef_alloc_func(cCMSSignerInfo);
     rb_define_method(cCMSSignerInfo,"issuer", ossl_cmssi_get_issuer, 0);
     rb_define_alias(cCMSSignerInfo, "name", "issuer");
     rb_define_method(cCMSSignerInfo,"serial", ossl_cmssi_get_serial,0);
