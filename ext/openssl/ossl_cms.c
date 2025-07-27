@@ -12,6 +12,7 @@
 #include "ossl.h"
 
 #if !defined(OPENSSL_NO_CMS)
+
 /*
  * The CMS_ContentInfo is the primary data structure which this module creates and maintains
  * Is is called OpenSSL::CMS::ContentInfo in ruby.
@@ -105,7 +106,7 @@ ossl_cmsci_to_pem(VALUE self)
     if (!(out = BIO_new(BIO_s_mem()))) {
 	ossl_raise(eCMSError, NULL);
     }
-    if (!PEM_write_bio_CMS(out, cmsci)) {
+    if (!SMIME_write_CMS(out, cmsci, /* data */NULL, /*flags*/0)) {
 	BIO_free(out);
 	ossl_raise(eCMSError, NULL);
     }
@@ -175,7 +176,7 @@ ossl_cmsci_initialize(int argc, VALUE *argv, VALUE self)
 	return self;
     arg = ossl_to_der_if_possible(arg);
     in = ossl_obj2bio(&arg);
-    c1 = PEM_read_bio_CMS(in, &cms, NULL, NULL);
+    c1 = SMIME_read_CMS(in, NULL);
     if (!c1) {
 	OSSL_BIO_reset(in);
         c1 = d2i_CMS_bio(in, &cms);
