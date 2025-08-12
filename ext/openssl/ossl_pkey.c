@@ -1825,7 +1825,7 @@ Init_ossl_pkey(void)
     cPKey = rb_define_class_under(mPKey, "PKey", rb_cObject);
 
     rb_define_module_function(mPKey, "read", ossl_pkey_new_from_data, -1);
-    rb_define_module_function(mPKey, "load", ossl_pkey_load_from_handle, -1);
+    rb_define_module_function(mPKey, "load_from_handle", ossl_pkey_load_from_handle, -1);
 
     rb_define_module_function(mPKey, "generate_parameters", ossl_pkey_s_generate_parameters, -1);
     rb_define_module_function(mPKey, "generate_key", ossl_pkey_s_generate_key, -1);
