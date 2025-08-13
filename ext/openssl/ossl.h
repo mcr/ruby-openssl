@@ -25,7 +25,9 @@
 
 #include <openssl/opensslv.h>
 
+#if !defined(OPENSSL_NO_CMS)
 #include <openssl/cms.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
