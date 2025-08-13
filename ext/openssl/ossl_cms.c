@@ -294,16 +294,17 @@ ossl_cmsci_get_certificates(VALUE self)
 /*
  * CMS SignerInfo is not a first class object, but part of the
  * CMS ContentInfo.  It can be wrapped in a ruby object, but it can
- * not be created or freed directly.
+ * not be created or freed directly, so a reference to the CMS ContentInfo
+ * is placed into the "cms" attribute.
  */
 static VALUE
-ossl_cmssi_new(CMS_SignerInfo *cmssi)
+ossl_cmssi_new(VALUE ci, CMS_SignerInfo *cmssi)
 {
     VALUE obj;
 
     obj = NewCMSsi(cCMSSignerInfo);
     SetCMSsi(obj, cmssi);
-    rb_ivar_set(obj, rb_intern("cms"), cmssi);
+    rb_ivar_set(ci, rb_intern("cms"), obj);
 
     return obj;
 }
@@ -368,7 +369,7 @@ ossl_cmsci_get_signers(VALUE self)
     ary = rb_ary_new2(num);
     for (i=0; i<num; i++) {
         CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sk, i);
-        rb_ary_push(ary, ossl_cmssi_new(si));
+        rb_ary_push(ary, ossl_cmssi_new(self, si));
     }
 
     return ary;
