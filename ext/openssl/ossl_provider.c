@@ -165,6 +165,30 @@ ossl_provider_get_name(VALUE self)
 
 /*
  * call-seq:
+ *    provider.pkey -> pkey
+ *
+ * Create a new PKEY object, with the context set to the given provider.
+ *
+ */
+static VALUE
+ossl_provider_pkey(VALUE self)
+{
+    OSSL_PROVIDER *prov;
+    if (RTYPEDDATA_DATA(self) == NULL) {
+        ossl_raise(eProviderError, "Provider already unloaded.");
+    }
+    GetProvider(self, prov);
+
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    void *ctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+
+
+
+      return ossl_pkey_new(pkey);
+}
+
+/*
+ * call-seq:
  *    provider.inspect -> string
  *
  * Pretty prints this provider.
@@ -198,6 +222,7 @@ Init_ossl_provider(void)
     rb_define_singleton_method(cProvider, "provider_names", ossl_provider_s_provider_names, 0);
 
     rb_define_method(cProvider, "unload", ossl_provider_unload, 0);
+    rb_define_method(cProvider, "pkey",   ossl_provider_pkey, 0);
     rb_define_method(cProvider, "name", ossl_provider_get_name, 0);
     rb_define_method(cProvider, "inspect", ossl_provider_inspect, 0);
 }
