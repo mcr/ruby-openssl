@@ -11,7 +11,8 @@
  */
 #include "ossl.h"
 
-#if defined(HAVE_CMS_SIGN)
+#if !defined(OPENSSL_NO_CMS)
+
 /*
  * The CMS_ContentInfo is the primary data structure which this module creates and maintains
  * Is is called OpenSSL::CMS::ContentInfo in ruby.
@@ -54,11 +55,14 @@
 #define ossl_cmsci_set_err_string(o,v) rb_iv_set((o), "@error_string", (v))
 #define ossl_cmsci_get_err_string(o)   rb_iv_get((o), "@error_string")
 
-VALUE cCMS;
-VALUE cCMSContentInfo;
-VALUE cCMSSignerInfo;
-VALUE cCMSRecipient;
-VALUE eCMSError;
+static VALUE cCMS;
+static VALUE cCMSContentInfo;
+static VALUE cCMSSignerInfo;
+#if 0
+/* not yet implemented. */
+static VALUE cCMSRecipient;
+#endif
+static VALUE eCMSError;
 
 
 static void
@@ -102,9 +106,9 @@ ossl_cmsci_to_pem(VALUE self)
     if (!(out = BIO_new(BIO_s_mem()))) {
 	ossl_raise(eCMSError, NULL);
     }
-    if (!PEM_write_bio_CMS(out, cmsci)) {
+    if (!SMIME_write_CMS(out, cmsci, /* data */NULL, /*flags*/0)) {
 	BIO_free(out);
-	ossl_raise(ePKCS7Error, NULL);
+	ossl_raise(eCMSError, NULL);
     }
     str = ossl_membio2str(out);
 
@@ -172,7 +176,7 @@ ossl_cmsci_initialize(int argc, VALUE *argv, VALUE self)
 	return self;
     arg = ossl_to_der_if_possible(arg);
     in = ossl_obj2bio(&arg);
-    c1 = PEM_read_bio_CMS(in, &cms, NULL, NULL);
+    c1 = SMIME_read_CMS(in, NULL);
     if (!c1) {
 	OSSL_BIO_reset(in);
         c1 = d2i_CMS_bio(in, &cms);
@@ -290,15 +294,17 @@ ossl_cmsci_get_certificates(VALUE self)
 /*
  * CMS SignerInfo is not a first class object, but part of the
  * CMS ContentInfo.  It can be wrapped in a ruby object, but it can
- * not be created or freed directly.
+ * not be created or freed directly, so a reference to the CMS ContentInfo
+ * is placed into the "cms" attribute.
  */
 static VALUE
-ossl_cmssi_new(CMS_SignerInfo *cmssi)
+ossl_cmssi_new(VALUE ci, CMS_SignerInfo *cmssi)
 {
     VALUE obj;
 
     obj = NewCMSsi(cCMSSignerInfo);
     SetCMSsi(obj, cmssi);
+    rb_ivar_set(ci, rb_intern("cms"), obj);
 
     return obj;
 }
@@ -352,22 +358,18 @@ ossl_cmsci_get_signers(VALUE self)
 {
     CMS_ContentInfo *cms;
     STACK_OF(CMS_SignerInfo) *sk;
-    CMS_SignerInfo *si;
     int num, i;
     VALUE ary;
 
     GetCMSContentInfo(self, cms);
     if (!(sk = CMS_get0_SignerInfos(cms))) {
-	OSSL_Debug("OpenSSL::CMS#get_signer_info == NULL!");
 	return rb_ary_new();
     }
-    if ((num = sk_CMS_SignerInfo_num(sk)) < 0) {
-	ossl_raise(eCMSError, "Negative number of signers!");
-    }
+    num = sk_CMS_SignerInfo_num(sk);
     ary = rb_ary_new2(num);
     for (i=0; i<num; i++) {
-	si = sk_CMS_SignerInfo_value(sk, i);
-	rb_ary_push(ary, ossl_cmssi_new(si));
+        CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sk, i);
+        rb_ary_push(ary, ossl_cmssi_new(self, si));
     }
 
     return ary;
@@ -423,7 +425,7 @@ ossl_cms_s_sign(int argc, VALUE *argv, VALUE klass)
     if(!(cms_cinfo = CMS_sign(x509, pkey, x509s, in, flg))){
 	BIO_free(in);
 	sk_X509_pop_free(x509s, X509_free);
-	ossl_raise(ePKCS7Error, NULL);
+	ossl_raise(eCMSError, NULL);
     }
     SetCMSContentInfo(ret, cms_cinfo);
     ossl_cmsci_set_data(ret, data);
@@ -435,7 +437,7 @@ ossl_cms_s_sign(int argc, VALUE *argv, VALUE klass)
 }
 
 /*
- * INIT
+ * INIT CMS interface
  */
 void
 Init_ossl_cms(void)
@@ -511,4 +513,12 @@ Init_ossl_cms(void)
     DefCMSConst(PARTIAL);
 }
 
-#endif /* HAVE_CMS_SIGN */
+#else
+/* empty init function for when OPENSSL_NO_CMS */
+void Init_ossl_cms(void)
+{
+  /* nothing */
+}
+
+#endif /* OPENSSL_NO_CMS */
+
