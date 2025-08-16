@@ -29,6 +29,9 @@ class OpenSSL::TestCMS < OpenSSL::TestCase
   end
 
   def test_signed
+    # cms.signers does not produce FIPS compliant things (not sure why)
+    omit_on_fips
+
     store = OpenSSL::X509::Store.new
     store.add_cert(@ca_cert)
     ca_certs = [@ca_cert]
