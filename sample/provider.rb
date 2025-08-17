@@ -23,12 +23,21 @@ sleep(1)
 prov01=OpenSSL::Provider.load("tpm2")
 print "Loaded #{OpenSSL::VERSION}\n"
 #print OpenSSL::PKey.methods.sort; print "\n"
-#ENV['TSS2_LOG']="all+ERROR,marshal+TRACE,tcti+DEBUG"
 pkey = OpenSSL::PKey.load_from_handle("handle:0x81010003")
 #pkey=prov01.pkey
 print pkey
 print pkey.inspect
-print "Done\n"
+print "\nDone\n"
+
+#foo = STDIN.read
+
+ENV['TSS2_LOG']="all+ERROR,marshal+TRACE,tcti+DEBUG"
+#puts pkey02.inspect
+gp = OpenSSL::PKey.generate_parameters("EC", "ec_paramgen_curve"=> "prime256v1")
+pkey02 = OpenSSL::PKey.generate_key(gp)
+puts pkey02.inspect
+
+
 
 
 
