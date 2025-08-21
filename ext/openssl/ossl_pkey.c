@@ -1211,7 +1211,7 @@ ossl_pkey_sign(int argc, VALUE *argv, VALUE self)
     size_t siglen;
     int state;
 
-    pkey = GetPrivPKeyPtr(self);
+    pkey = GetPKeyPtr(self);
     rb_scan_args(argc, argv, "21", &digest, &data, &options);
     if (!NIL_P(digest))
         md = ossl_evp_get_digestbyname(digest);
