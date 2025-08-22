@@ -180,11 +180,9 @@ ossl_provider_pkey(VALUE self)
     GetProvider(self, prov);
 
     EVP_PKEY *pkey = EVP_PKEY_new();
-    void *ctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+    //void *ctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
-
-
-      return ossl_pkey_new(pkey);
+    return ossl_pkey_wrap(pkey);
 }
 
 /*
